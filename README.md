@@ -1,0 +1,275 @@
+# PHP-Knip
+
+PHPプロジェクト向けのデッドコード検出ツールです。未使用のクラス、関数、use文などを発見します。
+
+**日本のレガシーPHPプロジェクト向け** - EUC-JP/Shift_JISエンコーディングに完全対応しています。
+
+## 特徴
+
+- **未使用コード検出**
+  - 未使用クラス、インターフェース、トレイト
+  - 未使用関数
+  - 未使用use文
+  - 未使用Composer依存パッケージ
+
+- **PHPバージョン対応**
+  - PHP 5.6 〜 PHP 8.3
+
+- **エンコーディング対応**
+  - UTF-8（BOMあり/なし）
+  - EUC-JP
+  - Shift_JIS
+  - 自動エンコーディング検出
+
+- **出力形式**
+  - テキスト（カラー出力対応）
+  - JSON
+  - XML
+  - JUnit XML（CI連携用）
+
+- **フレームワーク対応**
+  - Laravel（ServiceProvider、Controller、Route等の認識）
+
+## インストール
+
+```bash
+composer require --dev php-knip/php-knip
+```
+
+## 使い方
+
+### 基本的な使い方
+
+```bash
+# カレントディレクトリを解析
+./vendor/bin/php-knip
+
+# 特定のディレクトリを解析
+./vendor/bin/php-knip src/
+
+# 設定ファイルを指定して解析
+./vendor/bin/php-knip --config=php-knip.json
+```
+
+### コマンドラインオプション
+
+```
+Usage:
+  php-knip [options] [--] [<paths>...]
+
+Arguments:
+  paths                        解析対象パス（デフォルト: カレントディレクトリ）
+
+Options:
+  -c, --config=CONFIG          設定ファイルのパス
+  -f, --format=FORMAT          出力形式: text, json, xml, junit（デフォルト: text）
+  -o, --output=OUTPUT          出力ファイルパス（デフォルト: 標準出力）
+      --rules=RULES            チェックするルール（カンマ区切り）
+      --exclude=EXCLUDE        除外パターン（カンマ区切り）
+      --encoding=ENCODING      エンコーディング指定（auto, utf-8, euc-jp, shift_jis）
+      --php-version=VERSION    パース用PHPバージョン（5.6, 7.0, ..., 8.3）
+      --no-colors              カラー出力を無効化
+  -v, --verbose                詳細出力
+  -h, --help                   ヘルプ表示
+```
+
+### 設定ファイル
+
+プロジェクトルートに `php-knip.json` を作成：
+
+```json
+{
+    "include": [
+        "src/**/*.php",
+        "lib/**/*.php"
+    ],
+    "exclude": [
+        "vendor/**",
+        "tests/**"
+    ],
+    "rules": {
+        "unused-classes": true,
+        "unused-interfaces": true,
+        "unused-traits": true,
+        "unused-functions": true,
+        "unused-use-statements": true,
+        "unused-dependencies": true
+    },
+    "encoding": "auto",
+    "ignore": {
+        "symbols": [
+            "App\\Legacy\\*",
+            "*Controller"
+        ],
+        "files": [
+            "bootstrap.php"
+        ]
+    }
+}
+```
+
+## 出力例
+
+### テキスト形式
+
+```
+未使用クラス (2)
+  ✖ App\Services\OldService src/Services/OldService.php:10
+  ✖ App\Utils\DeprecatedHelper src/Utils/DeprecatedHelper.php:5
+
+未使用関数 (1)
+  ✖ App\helper_function src/helpers.php:15
+
+未使用use文 (3)
+  ⚠ DateTime src/Controller/HomeController.php:5
+  ⚠ App\Services\UnusedService src/Controller/HomeController.php:6
+  ⚠ InvalidArgumentException src/Services/UserService.php:4
+
+6件の問題を検出（エラー: 3, 警告: 3）
+```
+
+### JSON形式
+
+```json
+{
+  "summary": {
+    "total": 6,
+    "byType": {
+      "unused-classes": 2,
+      "unused-functions": 1,
+      "unused-use-statements": 3
+    },
+    "bySeverity": {
+      "error": 3,
+      "warning": 3
+    }
+  },
+  "issues": [
+    {
+      "type": "unused-classes",
+      "severity": "error",
+      "message": "Class 'App\\Services\\OldService' is never used",
+      "symbol": "App\\Services\\OldService",
+      "file": "src/Services/OldService.php",
+      "line": 10
+    }
+  ]
+}
+```
+
+## エンコーディング対応
+
+PHP-Knipは以下の方法でファイルのエンコーディングを自動検出します：
+
+1. **BOM検出** - UTF-8, UTF-16, UTF-32
+2. **declare(encoding=...)** 文
+3. **mbstring検出** - mb_detect_encodingによる自動検出
+
+EUC-JPやShift_JISを使用するレガシーPHPプロジェクトでは、解析前に自動的にUTF-8に変換されます。
+
+### エンコーディングの強制指定
+
+```bash
+# EUC-JPを強制
+./vendor/bin/php-knip --encoding=euc-jp src/legacy/
+
+# Shift_JISを強制
+./vendor/bin/php-knip --encoding=shift_jis src/old/
+```
+
+## コードの除外
+
+### 設定ファイルで除外
+
+```json
+{
+    "ignore": {
+        "symbols": [
+            "App\\Testing\\*",
+            "*Interface",
+            "App\\Legacy\\OldClass"
+        ],
+        "files": [
+            "src/bootstrap.php",
+            "src/legacy/*"
+        ]
+    }
+}
+```
+
+### コメントで除外
+
+```php
+<?php
+// @php-knip-ignore
+class IgnoredClass {}
+
+// @php-knip-ignore unused-class
+class AnotherIgnoredClass {}
+```
+
+## Laravelプロジェクト対応
+
+Laravelプロジェクトを自動検出し、以下を考慮した解析を行います：
+
+- **ServiceProvider** - 自動的に使用済みとして認識
+- **Controller** - ルートファイルからの参照を検出
+- **Middleware** - Kernelからの参照を検出
+- **Model/Job/Event/Listener** - フレームワーク規約に基づいて認識
+- **設定ファイル** - config/*.php内のクラス参照を検出
+
+## CI連携
+
+### GitHub Actions
+
+```yaml
+- name: Run PHP-Knip
+  run: ./vendor/bin/php-knip --format=junit --output=php-knip-report.xml
+
+- name: Upload Test Results
+  uses: actions/upload-artifact@v3
+  with:
+    name: php-knip-results
+    path: php-knip-report.xml
+```
+
+## 動作要件
+
+- PHP 5.6以上
+- ext-mbstring（エンコーディング検出に推奨）
+
+## 開発
+
+```bash
+# 依存パッケージのインストール
+composer install
+
+# テスト実行
+./vendor/bin/phpunit
+
+# Docker環境でのテスト（複数PHPバージョン）
+docker-compose run --rm php74 vendor/bin/phpunit
+docker-compose run --rm php83 vendor/bin/phpunit
+```
+
+## ロードマップ
+
+- [x] 未使用クラス/インターフェース/トレイト検出
+- [x] 未使用関数検出
+- [x] 未使用use文検出
+- [x] 未使用Composer依存検出
+- [x] Laravelプラグイン
+- [ ] 未使用メソッド検出
+- [ ] 未使用定数検出
+- [ ] 未使用プロパティ検出
+- [ ] Symfonyプラグイン
+- [ ] WordPressプラグイン
+- [ ] 自動修正機能
+
+## ライセンス
+
+MIT License
+
+## クレジット
+
+[knip](https://github.com/webpro/knip)と[PHPMD](https://phpmd.org/)にインスパイアされています。

@@ -1,0 +1,33 @@
+# Composer
+/vendor/
+composer.lock
+
+# Cache
+/.php-knip-cache/
+
+# IDE
+/.idea/
+/.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+/coverage/
+.phpunit.result.cache
+phpunit.xml
+
+# Build
+/build/
+/dist/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp

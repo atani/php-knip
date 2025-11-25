@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # PHP 7.4 (Development default)
+  php74:
+    build:
+      context: .
+      args:
+        PHP_VERSION: "7.4"
+    volumes:
+      - .:/app
+    working_dir: /app
+
+  # PHP 8.0
+  php80:
+    build:
+      context: .
+      args:
+        PHP_VERSION: "8.0"
+    volumes:
+      - .:/app
+    working_dir: /app
+
+  # PHP 8.1
+  php81:
+    build:
+      context: .
+      args:
+        PHP_VERSION: "8.1"
+    volumes:
+      - .:/app
+    working_dir: /app
+
+  # PHP 8.2
+  php82:
+    build:
+      context: .
+      args:
+        PHP_VERSION: "8.2"
+    volumes:
+      - .:/app
+    working_dir: /app
+
+  # PHP 8.3
+  php83:
+    build:
+      context: .
+      args:
+        PHP_VERSION: "8.3"
+    volumes:
+      - .:/app
+    working_dir: /app

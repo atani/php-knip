@@ -1,0 +1,59 @@
+{
+    "$schema": "https://php-knip.dev/schema.json",
+    "php_version": "auto",
+    "encoding": "auto",
+
+    "entry_points": [
+        "public/index.php",
+        "bin/console"
+    ],
+
+    "include": [
+        "src/**/*.php",
+        "app/**/*.php",
+        "lib/**/*.php"
+    ],
+
+    "ignore": {
+        "paths": [
+            "vendor/**",
+            "tests/**",
+            "storage/**",
+            "database/migrations/**"
+        ],
+        "patterns": [
+            "*Test.php",
+            "*Factory.php"
+        ],
+        "symbols": []
+    },
+
+    "framework": "auto",
+
+    "plugins": [],
+
+    "rules": {
+        "unused-files": "error",
+        "unused-classes": "error",
+        "unused-methods": "warning",
+        "unused-functions": "error",
+        "unused-constants": "warning",
+        "unused-traits": "error",
+        "unused-interfaces": "warning",
+        "unused-dependencies": "error",
+        "unused-use-statements": "warning",
+        "unused-variables": "info",
+        "unused-parameters": "off"
+    },
+
+    "output": {
+        "format": "text",
+        "colors": true,
+        "show_progress": true
+    },
+
+    "cache": {
+        "enabled": true,
+        "directory": ".php-knip-cache"
+    }
+}

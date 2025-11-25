@@ -1,0 +1,33 @@
+#!/usr/bin/env php
+<?php
+/**
+ * PHP-Knip CLI Entry Point
+ *
+ * Dead code detector for PHP with EUC-JP support
+ */
+
+// Find autoloader
+$autoloadPaths = [
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../../../autoload.php',
+];
+
+$autoloaderFound = false;
+foreach ($autoloadPaths as $autoloadPath) {
+    if (file_exists($autoloadPath)) {
+        require_once $autoloadPath;
+        $autoloaderFound = true;
+        break;
+    }
+}
+
+if (!$autoloaderFound) {
+    fwrite(STDERR, "Error: Could not find autoloader. Please run 'composer install'.\n");
+    exit(2);
+}
+
+use PhpKnip\Application;
+
+$application = new Application();
+$exitCode = $application->run();
+exit($exitCode);

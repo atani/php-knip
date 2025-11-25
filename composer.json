@@ -1,0 +1,56 @@
+{
+    "name": "atani/php-knip",
+    "description": "Dead code detector for PHP with EUC-JP support - combining knip and PHPMD best practices",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "php",
+        "static-analysis",
+        "dead-code",
+        "unused-code",
+        "euc-jp",
+        "legacy"
+    ],
+    "authors": [
+        {
+            "name": "atani",
+            "email": "a.taniwaki@example.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=5.6",
+        "nikic/php-parser": "^3.1|^4.0|^5.0",
+        "symfony/console": "^2.8|^3.4|^4.0|^5.0|^6.0|^7.0",
+        "symfony/finder": "^2.8|^3.4|^4.0|^5.0|^6.0|^7.0",
+        "psr/log": "^1.0|^2.0|^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5.7|^6.0|^7.0|^8.0|^9.0|^10.0|^11.0",
+        "squizlabs/php_codesniffer": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PhpKnip\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PhpKnip\\Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/php-knip"
+    ],
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "5.6.40"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "cs": "phpcs --standard=PSR12 src/",
+        "cs-fix": "phpcbf --standard=PSR12 src/"
+    }
+}
