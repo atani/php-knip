@@ -1,4 +1,8 @@
 version: 2
+
+# セキュリティアップデートは自動マージ対象
+# 通常のアップデートはpatch/minorのみ自動マージ
+
 updates:
   # Composer dependencies
   - package-ecosystem: "composer"
@@ -12,6 +16,7 @@ updates:
     labels:
       - "dependencies"
       - "php"
+      - "auto-merge-candidate"
     commit-message:
       prefix: "deps(composer)"
     groups:
@@ -40,5 +45,6 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+      - "auto-merge-candidate"
     commit-message:
       prefix: "deps(actions)"

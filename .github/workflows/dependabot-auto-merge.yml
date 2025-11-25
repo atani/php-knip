@@ -1,0 +1,92 @@
+name: Dependabot Auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Auto-merge Dependabot PRs
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for CI to complete
+        uses: fountainhead/action-wait-for-check@v1.2.0
+        id: wait-for-ci
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: "Test (PHP 8.2, php-parser ^5.0)"
+          ref: ${{ github.event.pull_request.head.sha }}
+          timeoutSeconds: 600
+          intervalSeconds: 30
+
+      - name: Wait for security check
+        uses: fountainhead/action-wait-for-check@v1.2.0
+        id: wait-for-security
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: "Composer Security Audit"
+          ref: ${{ github.event.pull_request.head.sha }}
+          timeoutSeconds: 300
+          intervalSeconds: 30
+
+      - name: Auto-approve patch/minor updates
+        if: |
+          steps.wait-for-ci.outputs.conclusion == 'success' &&
+          steps.wait-for-security.outputs.conclusion == 'success' &&
+          (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+           steps.metadata.outputs.update-type == 'version-update:semver-minor')
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-merge patch updates
+        if: |
+          steps.wait-for-ci.outputs.conclusion == 'success' &&
+          steps.wait-for-security.outputs.conclusion == 'success' &&
+          steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-merge security updates (any version)
+        if: |
+          steps.wait-for-ci.outputs.conclusion == 'success' &&
+          steps.wait-for-security.outputs.conclusion == 'success' &&
+          steps.metadata.outputs.dependency-type == 'direct:production' &&
+          steps.metadata.outputs.ghsa-id != ''
+        run: |
+          gh pr review --approve "$PR_URL" --body "Auto-approved: Security update for ${{ steps.metadata.outputs.ghsa-id }}"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on major updates (manual review required)
+        if: |
+          steps.metadata.outputs.update-type == 'version-update:semver-major' &&
+          steps.metadata.outputs.ghsa-id == ''
+        run: |
+          gh pr comment "$PR_URL" --body "⚠️ **メジャーバージョン更新**: 手動レビューが必要です。
+
+          - 更新タイプ: ${{ steps.metadata.outputs.update-type }}
+          - パッケージ: ${{ steps.metadata.outputs.dependency-names }}
+          - 変更: ${{ steps.metadata.outputs.previous-version }} → ${{ steps.metadata.outputs.new-version }}
+
+          破壊的変更がないか確認してください。"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
