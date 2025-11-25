@@ -9,6 +9,7 @@ namespace PhpKnip\Analyzer;
 
 use PhpKnip\Resolver\SymbolTable;
 use PhpKnip\Resolver\Reference;
+use PhpKnip\Plugin\PluginManager;
 
 /**
  * Context object for analysis containing symbols and references
@@ -34,6 +35,11 @@ class AnalysisContext
      * @var array<string, array> Use statements by file
      */
     private $useStatements = array();
+
+    /**
+     * @var PluginManager|null Plugin manager
+     */
+    private $pluginManager;
 
     /**
      * Constructor
@@ -203,5 +209,55 @@ class AnalysisContext
     public function addReferences(array $references)
     {
         $this->references = array_merge($this->references, $references);
+    }
+
+    /**
+     * Set plugin manager
+     *
+     * @param PluginManager $pluginManager Plugin manager
+     */
+    public function setPluginManager(PluginManager $pluginManager)
+    {
+        $this->pluginManager = $pluginManager;
+    }
+
+    /**
+     * Get plugin manager
+     *
+     * @return PluginManager|null
+     */
+    public function getPluginManager()
+    {
+        return $this->pluginManager;
+    }
+
+    /**
+     * Check if a symbol should be ignored by plugins
+     *
+     * @param string $symbolName Symbol name (FQN or short name)
+     *
+     * @return bool
+     */
+    public function shouldPluginIgnoreSymbol($symbolName)
+    {
+        if ($this->pluginManager === null) {
+            return false;
+        }
+
+        return $this->pluginManager->shouldIgnoreSymbol($symbolName);
+    }
+
+    /**
+     * Get active plugin names
+     *
+     * @return array<string>
+     */
+    public function getActivePluginNames()
+    {
+        if ($this->pluginManager === null) {
+            return array();
+        }
+
+        return $this->pluginManager->getActivePluginNames();
     }
 }

@@ -12,7 +12,20 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Finder\Finder;
+use PhpParser\NodeTraverser;
 use PhpKnip\Config\ConfigLoader;
+use PhpKnip\Parser\AstBuilder;
+use PhpKnip\Resolver\SymbolCollector;
+use PhpKnip\Resolver\SymbolTable;
+use PhpKnip\Resolver\ReferenceCollector;
+use PhpKnip\Analyzer\AnalysisContext;
+use PhpKnip\Analyzer\ClassAnalyzer;
+use PhpKnip\Analyzer\FunctionAnalyzer;
+use PhpKnip\Analyzer\UseStatementAnalyzer;
+use PhpKnip\Reporter\TextReporter;
+use PhpKnip\Reporter\JsonReporter;
+use PhpKnip\Plugin\PluginManager;
 
 /**
  * Command to analyze PHP code for unused elements
@@ -118,6 +131,12 @@ class AnalyzeCommand extends Command
                 InputOption::VALUE_REQUIRED,
                 'Number of parallel workers',
                 '1'
+            )
+            ->addOption(
+                'no-colors',
+                null,
+                InputOption::VALUE_NONE,
+                'Disable colored output'
             );
     }
 
@@ -129,13 +148,19 @@ class AnalyzeCommand extends Command
      *
      * @return int Exit code
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln('<info>PHP-Knip - Dead Code Detector</info>');
         $output->writeln('');
 
         $path = $input->getArgument('path');
         $configFile = $input->getOption('config');
+        $realPath = realpath($path);
+
+        if ($realPath === false) {
+            $output->writeln(sprintf('<error>Path not found: %s</error>', $path));
+            return 1;
+        }
 
         // Load configuration
         $configLoader = new ConfigLoader();
@@ -144,14 +169,230 @@ class AnalyzeCommand extends Command
         // Merge CLI options into config
         $config = $this->mergeCliOptions($config, $input);
 
-        $output->writeln(sprintf('Analyzing: <comment>%s</comment>', realpath($path) ?: $path));
+        $output->writeln(sprintf('Analyzing: <comment>%s</comment>', $realPath));
         $output->writeln(sprintf('Encoding: <comment>%s</comment>', $config['encoding']));
         $output->writeln('');
 
-        // TODO: Implement actual analysis
-        $output->writeln('<comment>Analysis not yet implemented. Phase 0 setup complete.</comment>');
+        // Find PHP files
+        $output->write('Finding PHP files... ');
+        $files = $this->findPhpFiles($realPath, $config);
+        $output->writeln(sprintf('<info>%d files found</info>', count($files)));
+
+        if (empty($files)) {
+            $output->writeln('<comment>No PHP files found to analyze.</comment>');
+            return 0;
+        }
+
+        // Phase 1: Parse files and collect symbols
+        $output->write('Parsing files... ');
+        $astBuilder = new AstBuilder(
+            isset($config['php_version']) ? $config['php_version'] : 'auto',
+            $config['encoding'] !== 'auto' ? $config['encoding'] : null
+        );
+
+        $symbolTable = new SymbolTable();
+        $symbolCollector = new SymbolCollector($symbolTable);
+        $allReferences = array();
+        $allUseStatements = array();
+        $parsedCount = 0;
+        $errorCount = 0;
+
+        foreach ($files as $filePath) {
+            $ast = $astBuilder->buildFromFile($filePath);
+
+            if ($ast === null) {
+                $errorCount++;
+                continue;
+            }
+
+            // Collect symbols
+            $symbolCollector->setCurrentFile($filePath);
+            $symbolCollector->reset();
+            $traverser = new NodeTraverser();
+            $traverser->addVisitor($symbolCollector);
+            $traverser->traverse($ast);
+
+            // Collect references
+            $referenceCollector = new ReferenceCollector($filePath);
+            $traverser2 = new NodeTraverser();
+            $traverser2->addVisitor($referenceCollector);
+            $traverser2->traverse($ast);
+
+            $allReferences = array_merge($allReferences, $referenceCollector->getReferences());
+            $allUseStatements[$filePath] = $referenceCollector->getUseStatements();
+
+            $parsedCount++;
+        }
+
+        $output->writeln(sprintf('<info>%d parsed</info> (%d errors)', $parsedCount, $errorCount));
+
+        // Show parse errors if any
+        if ($astBuilder->hasErrors() && $output->isVerbose()) {
+            $output->writeln('');
+            $output->writeln('<comment>Parse errors:</comment>');
+            foreach ($astBuilder->getErrors() as $error) {
+                $output->writeln(sprintf('  %s:%d - %s', $error['file'], $error['line'], $error['message']));
+            }
+        }
+
+        // Phase 2: Analysis
+        $output->write('Analyzing... ');
+
+        // Set up plugin manager
+        $pluginManager = new PluginManager();
+        $pluginManager->discoverBuiltinPlugins();
+
+        // Read composer.json if available
+        $composerData = array();
+        $composerPath = $realPath . '/composer.json';
+        if (file_exists($composerPath)) {
+            $composerContent = file_get_contents($composerPath);
+            if ($composerContent !== false) {
+                $composerData = json_decode($composerContent, true);
+                if (!is_array($composerData)) {
+                    $composerData = array();
+                }
+            }
+        }
+
+        // Activate applicable plugins
+        $pluginManager->activate($realPath, $composerData);
+
+        // Show active plugins
+        $activePlugins = $pluginManager->getActivePluginNames();
+        if (!empty($activePlugins) && $output->isVerbose()) {
+            $output->writeln('');
+            $output->writeln(sprintf('Active plugins: <info>%s</info>', implode(', ', $activePlugins)));
+        }
+
+        $context = new AnalysisContext($symbolTable, $allReferences, $config);
+        $context->setPluginManager($pluginManager);
+
+        // Set use statements
+        foreach ($allUseStatements as $file => $uses) {
+            $context->setUseStatements($file, $uses);
+        }
+
+        $issues = array();
+
+        // Run analyzers
+        $analyzers = array(
+            new ClassAnalyzer(),
+            new FunctionAnalyzer(),
+            new UseStatementAnalyzer(),
+        );
+
+        foreach ($analyzers as $analyzer) {
+            $analyzerIssues = $analyzer->analyze($context);
+            $issues = array_merge($issues, $analyzerIssues);
+        }
+
+        $output->writeln(sprintf('<info>%d issues found</info>', count($issues)));
+        $output->writeln('');
+
+        // Phase 3: Report
+        $showColors = !$input->getOption('no-colors') && $output->isDecorated();
+        $reporter = $this->getReporter($input->getOption('format'));
+        $reportOptions = array(
+            'colors' => $showColors,
+            'basePath' => $realPath,
+            'groupBy' => 'type',
+        );
+
+        $report = $reporter->report($issues, $reportOptions);
+
+        // Output to file or stdout
+        $outputFile = $input->getOption('output');
+        if ($outputFile) {
+            file_put_contents($outputFile, $report);
+            $output->writeln(sprintf('Report written to: <info>%s</info>', $outputFile));
+        } else {
+            $output->write($report);
+        }
+
+        // Return code
+        if ($input->getOption('strict') && count($issues) > 0) {
+            return 1;
+        }
 
         return 0;
+    }
+
+    /**
+     * Find PHP files to analyze
+     *
+     * @param string $path Base path
+     * @param array $config Configuration
+     *
+     * @return array File paths
+     */
+    private function findPhpFiles($path, array $config)
+    {
+        $finder = new Finder();
+        $finder->files()->name('*.php')->in($path);
+
+        // Apply exclude patterns (these always apply)
+        $excludePatterns = isset($config['exclude']) ? $config['exclude'] : array();
+        $defaultExcludes = array('vendor', 'node_modules', '.git', 'cache', 'storage', 'tmp', 'temp');
+        $allExcludes = array_merge($defaultExcludes, $excludePatterns);
+
+        // Also exclude from ignore.paths if specified
+        if (isset($config['ignore']['paths'])) {
+            foreach ($config['ignore']['paths'] as $ignorePath) {
+                // Convert glob to directory name
+                $dirName = str_replace(array('/**', '/*', '*'), '', $ignorePath);
+                if (!empty($dirName)) {
+                    $allExcludes[] = $dirName;
+                }
+            }
+        }
+
+        foreach ($allExcludes as $exclude) {
+            $finder->notPath($exclude);
+        }
+
+        $files = array();
+        foreach ($finder as $file) {
+            $files[] = $file->getRealPath();
+        }
+
+        return $files;
+    }
+
+    /**
+     * Convert glob pattern to regex
+     *
+     * @param string $glob Glob pattern
+     *
+     * @return string Regex pattern
+     */
+    private function globToRegex($glob)
+    {
+        // Simple conversion for common patterns
+        $regex = str_replace(
+            array('**/', '*', '?'),
+            array('(.*/)?', '[^/]*', '[^/]'),
+            $glob
+        );
+        return $regex;
+    }
+
+    /**
+     * Get reporter for format
+     *
+     * @param string $format Format name
+     *
+     * @return \PhpKnip\Reporter\ReporterInterface
+     */
+    private function getReporter($format)
+    {
+        switch ($format) {
+            case 'json':
+                return new JsonReporter();
+            case 'text':
+            default:
+                return new TextReporter();
+        }
     }
 
     /**

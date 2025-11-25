@@ -381,11 +381,18 @@ class ClassAnalyzer implements AnalyzerInterface
      */
     private function shouldIgnore(Symbol $symbol, AnalysisContext $context)
     {
+        $fqn = $symbol->getFullyQualifiedName();
+        $shortName = $symbol->getName();
+
+        // Check plugin patterns first
+        if ($context->shouldPluginIgnoreSymbol($fqn) ||
+            $context->shouldPluginIgnoreSymbol($shortName)) {
+            return true;
+        }
+
         // Check ignore patterns from config
         $ignorePatterns = $context->getConfigValue('ignore', array());
         $symbolPatterns = isset($ignorePatterns['symbols']) ? $ignorePatterns['symbols'] : array();
-
-        $fqn = $symbol->getFullyQualifiedName();
 
         foreach ($symbolPatterns as $pattern) {
             if ($this->matchesPattern($fqn, $pattern)) {

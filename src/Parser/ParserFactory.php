@@ -14,7 +14,7 @@ use PhpParser\Lexer;
 /**
  * Factory for creating PHP-Parser instances
  *
- * Supports PHP 5.6 through PHP 8.x syntax parsing
+ * Supports PHP-Parser v3, v4, and v5
  */
 class ParserFactory
 {
@@ -36,32 +36,70 @@ class ParserFactory
     {
         $factory = new PhpParserFactory();
 
-        // Determine parser kind based on version
-        $kind = $this->getParserKind($phpVersion);
-
-        // Create lexer with appropriate options
-        $lexer = $this->createLexer($phpVersion);
-
-        // PHP-Parser v4/v5 API
-        if (method_exists($factory, 'create')) {
-            return $factory->create($kind, $lexer);
+        // PHP-Parser v5 API (createForNewestSupportedVersion exists)
+        if (method_exists($factory, 'createForNewestSupportedVersion')) {
+            return $this->createV5Parser($factory, $phpVersion);
         }
 
-        // PHP-Parser v3 API fallback
-        return $this->createLegacyParser($kind, $lexer);
+        // PHP-Parser v4 API (create with PREFER_PHP7 constant)
+        if (method_exists($factory, 'create') && defined('PhpParser\\ParserFactory::PREFER_PHP7')) {
+            return $this->createV4Parser($factory, $phpVersion);
+        }
+
+        // PHP-Parser v3 fallback
+        return $this->createLegacyParser($phpVersion);
     }
 
     /**
-     * Get parser kind constant for PHP-Parser
+     * Create parser using PHP-Parser v5 API
+     *
+     * @param PhpParserFactory $factory Parser factory
+     * @param string $phpVersion PHP version
+     *
+     * @return Parser Parser instance
+     */
+    private function createV5Parser(PhpParserFactory $factory, $phpVersion)
+    {
+        // v5 uses createForNewestSupportedVersion() or createForVersion()
+        if ($phpVersion === 'auto') {
+            return $factory->createForNewestSupportedVersion();
+        }
+
+        // For specific versions, use createForVersion if available
+        if (method_exists($factory, 'createForVersion') && class_exists('PhpParser\\PhpVersion')) {
+            $phpVersionObj = \PhpParser\PhpVersion::fromString($phpVersion);
+            return $factory->createForVersion($phpVersionObj);
+        }
+
+        // Fallback to newest supported
+        return $factory->createForNewestSupportedVersion();
+    }
+
+    /**
+     * Create parser using PHP-Parser v4 API
+     *
+     * @param PhpParserFactory $factory Parser factory
+     * @param string $phpVersion PHP version
+     *
+     * @return Parser Parser instance
+     */
+    private function createV4Parser(PhpParserFactory $factory, $phpVersion)
+    {
+        $kind = $this->getParserKindV4($phpVersion);
+        $lexer = $this->createLexer($phpVersion);
+        return $factory->create($kind, $lexer);
+    }
+
+    /**
+     * Get parser kind constant for PHP-Parser v4
      *
      * @param string $phpVersion PHP version
      *
      * @return int Parser kind constant
      */
-    private function getParserKind($phpVersion)
+    private function getParserKindV4($phpVersion)
     {
         if ($phpVersion === 'auto') {
-            // Use the most compatible parser
             return PhpParserFactory::PREFER_PHP7;
         }
 
@@ -69,7 +107,9 @@ class ParserFactory
 
         switch ($majorVersion) {
             case self::PHP_5:
-                return PhpParserFactory::PREFER_PHP5;
+                return defined('PhpParser\\ParserFactory::PREFER_PHP5')
+                    ? PhpParserFactory::PREFER_PHP5
+                    : PhpParserFactory::PREFER_PHP7;
             case self::PHP_7:
             case self::PHP_8:
             default:
@@ -82,7 +122,7 @@ class ParserFactory
      *
      * @param string $phpVersion PHP version
      *
-     * @return Lexer Lexer instance
+     * @return Lexer|null Lexer instance or null for v5
      */
     private function createLexer($phpVersion)
     {
@@ -110,21 +150,18 @@ class ParserFactory
     /**
      * Create parser using PHP-Parser v3 API
      *
-     * @param int $kind Parser kind
-     * @param Lexer $lexer Lexer instance
+     * @param string $phpVersion PHP version
      *
      * @return Parser Parser instance
      */
-    private function createLegacyParser($kind, Lexer $lexer)
+    private function createLegacyParser($phpVersion)
     {
+        $lexer = $this->createLexer($phpVersion);
+        $majorVersion = $this->getMajorVersion($phpVersion);
+
         // PHP-Parser v3 uses different class names
-        switch ($kind) {
-            case PhpParserFactory::PREFER_PHP5:
-            case PhpParserFactory::ONLY_PHP5:
-                if (class_exists('PhpParser\\Parser\\Php5')) {
-                    return new \PhpParser\Parser\Php5($lexer);
-                }
-                break;
+        if ($majorVersion === self::PHP_5 && class_exists('PhpParser\\Parser\\Php5')) {
+            return new \PhpParser\Parser\Php5($lexer);
         }
 
         // Default to PHP7 parser
@@ -183,11 +220,6 @@ class ParserFactory
         // Attributes
         if (preg_match('/#\[[\w\\\\]+/', $code)) {
             return true;
-        }
-
-        // Named arguments
-        if (preg_match('/\w+\s*:\s*\$?\w+/', $code)) {
-            // This is a simplified check; named arguments are context-dependent
         }
 
         // Match expression
