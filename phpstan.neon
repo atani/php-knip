@@ -1,0 +1,20 @@
+parameters:
+    level: 5
+    paths:
+        - src
+    excludePaths:
+        - tests
+        - vendor
+
+    # PHP 5.6互換のため、一部のルールを緩和
+    reportUnmatchedIgnoredErrors: false
+
+    ignoreErrors:
+        # php-parser v3/v4/v5 互換性対応
+        - '#Call to an undefined method PhpParser\\Node\\Name::toString\(\)#'
+        - '#Call to an undefined method PhpParser\\Node::getStartLine\(\)#'
+
+        # PHP 5.6互換（型宣言なし）
+        - '#Method .+ has no return type specified#'
+        - '#Method .+ has parameter .+ with no type specified#'
+        - '#Property .+ has no type specified#'
