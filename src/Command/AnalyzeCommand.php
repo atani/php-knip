@@ -35,6 +35,9 @@ use PhpKnip\Reporter\GithubReporter;
 use PhpKnip\Reporter\CsvReporter;
 use PhpKnip\Reporter\HtmlReporter;
 use PhpKnip\Plugin\PluginManager;
+use PhpKnip\Cache\CacheManager;
+use PhpKnip\Resolver\Symbol;
+use PhpKnip\Resolver\Reference;
 
 /**
  * Command to analyze PHP code for unused elements
@@ -134,6 +137,12 @@ class AnalyzeCommand extends Command
                 'Disable caching'
             )
             ->addOption(
+                'clear-cache',
+                null,
+                InputOption::VALUE_NONE,
+                'Clear cache before analyzing'
+            )
+            ->addOption(
                 'parallel',
                 'j',
                 InputOption::VALUE_REQUIRED,
@@ -200,6 +209,19 @@ class AnalyzeCommand extends Command
             return 0;
         }
 
+        // Initialize cache manager
+        $cacheDir = $realPath . '/' . (isset($config['cache']['directory']) ? $config['cache']['directory'] : '.php-knip-cache');
+        $cacheEnabled = isset($config['cache']['enabled']) ? $config['cache']['enabled'] : true;
+        $cacheManager = new CacheManager($cacheDir, $cacheEnabled);
+
+        // Clear cache if requested
+        if ($input->getOption('clear-cache')) {
+            $cacheManager->clear();
+            if ($showProgress) {
+                $output->writeln('<comment>Cache cleared.</comment>');
+            }
+        }
+
         // Phase 1: Parse files and collect symbols
         if ($showProgress) {
             $output->write('Parsing files... ');
@@ -215,8 +237,40 @@ class AnalyzeCommand extends Command
         $allUseStatements = array();
         $parsedCount = 0;
         $errorCount = 0;
+        $cacheHits = 0;
 
         foreach ($files as $filePath) {
+            // Try to use cache
+            if ($cacheManager->isValid($filePath)) {
+                $cached = $cacheManager->get($filePath);
+                if ($cached !== null) {
+                    // Restore symbols from cache
+                    if (isset($cached['symbols'])) {
+                        foreach ($cached['symbols'] as $symbolData) {
+                            $symbol = Symbol::fromArray($symbolData);
+                            $symbolTable->add($symbol);
+                        }
+                    }
+
+                    // Restore references from cache
+                    if (isset($cached['references'])) {
+                        foreach ($cached['references'] as $refData) {
+                            $allReferences[] = Reference::fromArray($refData);
+                        }
+                    }
+
+                    // Restore use statements from cache
+                    if (isset($cached['useStatements'])) {
+                        $allUseStatements[$filePath] = $cached['useStatements'];
+                    }
+
+                    $parsedCount++;
+                    $cacheHits++;
+                    continue;
+                }
+            }
+
+            // Parse file
             $ast = $astBuilder->buildFromFile($filePath);
 
             if ($ast === null) {
@@ -231,20 +285,44 @@ class AnalyzeCommand extends Command
             $traverser->addVisitor($symbolCollector);
             $traverser->traverse($ast);
 
+            // Get collected symbols for this file
+            $fileSymbols = array();
+            foreach ($symbolTable->getAll() as $symbol) {
+                if ($symbol->getFilePath() === $filePath) {
+                    $fileSymbols[] = $symbol->toArray();
+                }
+            }
+
             // Collect references
             $referenceCollector = new ReferenceCollector($filePath);
             $traverser2 = new NodeTraverser();
             $traverser2->addVisitor($referenceCollector);
             $traverser2->traverse($ast);
 
-            $allReferences = array_merge($allReferences, $referenceCollector->getReferences());
-            $allUseStatements[$filePath] = $referenceCollector->getUseStatements();
+            $fileReferences = $referenceCollector->getReferences();
+            $fileUseStatements = $referenceCollector->getUseStatements();
+
+            $allReferences = array_merge($allReferences, $fileReferences);
+            $allUseStatements[$filePath] = $fileUseStatements;
+
+            // Save to cache
+            $cacheManager->set($filePath, array(
+                'symbols' => $fileSymbols,
+                'references' => array_map(function ($ref) {
+                    return $ref->toArray();
+                }, $fileReferences),
+                'useStatements' => $fileUseStatements,
+            ));
 
             $parsedCount++;
         }
 
+        // Save cache metadata
+        $cacheManager->saveMetadata();
+
         if ($showProgress) {
-            $output->writeln(sprintf('<info>%d parsed</info> (%d errors)', $parsedCount, $errorCount));
+            $cacheInfo = $cacheEnabled && $cacheHits > 0 ? sprintf(' (%d from cache)', $cacheHits) : '';
+            $output->writeln(sprintf('<info>%d parsed</info>%s (%d errors)', $parsedCount, $cacheInfo, $errorCount));
         }
 
         // Show parse errors if any

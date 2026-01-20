@@ -76,4 +76,21 @@ abstract class TestCase extends BaseTestCase
     {
         parent::assertContains($needle, $haystack, $message);
     }
+
+    /**
+     * Assert that a string matches a regular expression (PHPUnit version compatible)
+     *
+     * @param string $pattern
+     * @param string $string
+     * @param string $message
+     */
+    protected static function assertMatchesRegex(string $pattern, string $string, string $message = ''): void
+    {
+        if (method_exists(parent::class, 'assertMatchesRegularExpression')) {
+            parent::assertMatchesRegularExpression($pattern, $string, $message);
+        } else {
+            // PHPUnit < 9.1
+            parent::assertRegExp($pattern, $string, $message);
+        }
+    }
 }

@@ -567,4 +567,37 @@ class Reference
             'metadata' => $this->metadata,
         );
     }
+
+    /**
+     * Create Reference from array representation
+     *
+     * @param array $data Array data from toArray()
+     *
+     * @return Reference
+     */
+    public static function fromArray(array $data)
+    {
+        $ref = new self($data['type'], $data['symbolName']);
+
+        if (isset($data['symbolParent'])) {
+            $ref->symbolParent = $data['symbolParent'];
+        }
+        if (isset($data['file'])) {
+            $ref->filePath = $data['file'];
+        }
+        if (isset($data['line'])) {
+            $ref->line = $data['line'];
+        }
+        if (isset($data['context'])) {
+            $ref->context = $data['context'];
+        }
+        if (isset($data['isDynamic'])) {
+            $ref->isDynamic = $data['isDynamic'];
+        }
+        if (isset($data['metadata'])) {
+            $ref->metadata = $data['metadata'];
+        }
+
+        return $ref;
+    }
 }

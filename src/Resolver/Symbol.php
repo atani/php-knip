@@ -647,4 +647,61 @@ class Symbol
             'metadata' => $this->metadata,
         );
     }
+
+    /**
+     * Create Symbol from array representation
+     *
+     * @param array $data Array data from toArray()
+     *
+     * @return Symbol
+     */
+    public static function fromArray(array $data)
+    {
+        $symbol = new self($data['type'], $data['name']);
+
+        if (isset($data['fqn'])) {
+            $symbol->fullyQualifiedName = $data['fqn'];
+        }
+        if (isset($data['namespace'])) {
+            $symbol->namespace = $data['namespace'];
+        }
+        if (isset($data['parent'])) {
+            $symbol->parent = $data['parent'];
+        }
+        if (isset($data['visibility'])) {
+            $symbol->visibility = $data['visibility'];
+        }
+        if (isset($data['isStatic'])) {
+            $symbol->isStatic = $data['isStatic'];
+        }
+        if (isset($data['isAbstract'])) {
+            $symbol->isAbstract = $data['isAbstract'];
+        }
+        if (isset($data['isFinal'])) {
+            $symbol->isFinal = $data['isFinal'];
+        }
+        if (isset($data['file'])) {
+            $symbol->filePath = $data['file'];
+        }
+        if (isset($data['startLine'])) {
+            $symbol->startLine = $data['startLine'];
+        }
+        if (isset($data['endLine'])) {
+            $symbol->endLine = $data['endLine'];
+        }
+        if (isset($data['extends'])) {
+            $symbol->extends = $data['extends'];
+        }
+        if (isset($data['implements'])) {
+            $symbol->implements = $data['implements'];
+        }
+        if (isset($data['uses'])) {
+            $symbol->uses = $data['uses'];
+        }
+        if (isset($data['metadata'])) {
+            $symbol->metadata = $data['metadata'];
+        }
+
+        return $symbol;
+    }
 }
