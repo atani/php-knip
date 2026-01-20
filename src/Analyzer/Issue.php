@@ -253,6 +253,52 @@ class Issue
         return $issue;
     }
 
+    /**
+     * Create an unused property issue
+     *
+     * @param string $propertyName Property name
+     * @param string $className Class name
+     * @param string $filePath File path
+     * @param int $line Line number
+     *
+     * @return Issue
+     */
+    public static function unusedProperty($propertyName, $className, $filePath, $line)
+    {
+        $issue = new self(
+            self::TYPE_UNUSED_PROPERTY,
+            sprintf("Property '%s::\$%s' is never used", $className, $propertyName),
+            self::SEVERITY_WARNING
+        );
+        $issue->setFilePath($filePath);
+        $issue->setLine($line);
+        $issue->setSymbolName($className . '::$' . $propertyName);
+        $issue->setSymbolType('property');
+        $issue->setMetadata('className', $className);
+        $issue->setMetadata('propertyName', $propertyName);
+        return $issue;
+    }
+
+    /**
+     * Create an unused file issue
+     *
+     * @param string $filePath File path
+     *
+     * @return Issue
+     */
+    public static function unusedFile($filePath)
+    {
+        $issue = new self(
+            self::TYPE_UNUSED_FILE,
+            sprintf("File '%s' contains no used code", basename($filePath)),
+            self::SEVERITY_WARNING
+        );
+        $issue->setFilePath($filePath);
+        $issue->setSymbolName(basename($filePath));
+        $issue->setSymbolType('file');
+        return $issue;
+    }
+
     // Getters and Setters
 
     /**
