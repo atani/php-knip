@@ -11,24 +11,8 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
-  dependency-review:
-    name: Dependency Review
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    # Note: Requires Dependency Graph to be enabled in repository settings
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
-          deny-licenses: GPL-3.0, AGPL-3.0
-
   composer-audit:
     name: Composer Security Audit
     runs-on: ubuntu-latest
@@ -69,3 +53,6 @@ jobs:
   # Note: CodeQL does not support PHP
   # Supported languages: C/C++, C#, Go, Java/Kotlin, JavaScript/TypeScript, Python, Ruby, Swift
   # Using PHPStan for static analysis instead (see ci.yml)
+  #
+  # Note: Dependency Review requires Dependency Graph to be enabled.
+  # Using Composer Audit for dependency security checks instead.
