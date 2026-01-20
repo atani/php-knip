@@ -62,14 +62,27 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Auto-merge security updates (any version)
+      - name: Auto-merge security updates (any version, including dev)
         if: |
           steps.wait-for-ci.outputs.conclusion == 'success' &&
           steps.wait-for-security.outputs.conclusion == 'success' &&
-          steps.metadata.outputs.dependency-type == 'direct:production' &&
           steps.metadata.outputs.ghsa-id != ''
         run: |
           gh pr review --approve "$PR_URL" --body "Auto-approved: Security update for ${{ steps.metadata.outputs.ghsa-id }}"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-merge minor updates for dev dependencies
+        if: |
+          steps.wait-for-ci.outputs.conclusion == 'success' &&
+          steps.wait-for-security.outputs.conclusion == 'success' &&
+          steps.metadata.outputs.dependency-type == 'direct:development' &&
+          (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+           steps.metadata.outputs.update-type == 'version-update:semver-minor')
+        run: |
+          gh pr review --approve "$PR_URL"
           gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
