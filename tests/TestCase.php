@@ -1,75 +1,79 @@
 <?php
 /**
- * Base TestCase with PHPUnit version compatibility
+ * Base TestCase with PHPUnit and php-parser version compatibility
  */
 
 namespace PhpKnip\Tests;
 
 use PHPUnit\Framework\TestCase as BaseTestCase;
+use PhpParser\ParserFactory;
 
 /**
- * Base test case that provides compatibility layer for different PHPUnit versions
+ * Base test case that provides compatibility layer for different PHPUnit and php-parser versions
  */
 abstract class TestCase extends BaseTestCase
 {
     /**
-     * Asserts that a haystack contains a needle (PHPUnit 9+ compatible)
+     * Create a PHP parser compatible with both php-parser v4 and v5
      *
-     * For PHPUnit 9+, this method routes string haystacks to assertStringContainsString
-     * and array haystacks to assertContains.
+     * @return \PhpParser\Parser
+     */
+    protected function createParser()
+    {
+        $factory = new ParserFactory();
+
+        // php-parser v5 uses createForNewestSupportedVersion()
+        // php-parser v4 uses create(ParserFactory::PREFER_PHP7)
+        if (method_exists($factory, 'createForNewestSupportedVersion')) {
+            return $factory->createForNewestSupportedVersion();
+        }
+
+        return $factory->create(ParserFactory::PREFER_PHP7);
+    }
+
+    /**
+     * Assert that a string contains a substring (PHPUnit version compatible)
      *
-     * @param mixed $needle
-     * @param mixed $haystack
+     * @param string $needle
+     * @param string $haystack
      * @param string $message
      */
-    public static function assertContains($needle, $haystack, string $message = ''): void
+    protected static function assertStringContains(string $needle, string $haystack, string $message = ''): void
     {
-        if (is_string($haystack)) {
-            if (method_exists(parent::class, 'assertStringContainsString')) {
-                parent::assertStringContainsString($needle, $haystack, $message);
-            } else {
-                // PHPUnit < 9
-                parent::assertContains($needle, $haystack, $message);
-            }
+        if (method_exists(parent::class, 'assertStringContainsString')) {
+            parent::assertStringContainsString($needle, $haystack, $message);
         } else {
+            // PHPUnit < 9
             parent::assertContains($needle, $haystack, $message);
         }
     }
 
     /**
-     * Asserts that a haystack does not contain a needle (PHPUnit 9+ compatible)
+     * Assert that a string does not contain a substring (PHPUnit version compatible)
      *
-     * @param mixed $needle
-     * @param mixed $haystack
+     * @param string $needle
+     * @param string $haystack
      * @param string $message
      */
-    public static function assertNotContains($needle, $haystack, string $message = ''): void
+    protected static function assertStringNotContains(string $needle, string $haystack, string $message = ''): void
     {
-        if (is_string($haystack)) {
-            if (method_exists(parent::class, 'assertStringNotContainsString')) {
-                parent::assertStringNotContainsString($needle, $haystack, $message);
-            } else {
-                // PHPUnit < 9
-                parent::assertNotContains($needle, $haystack, $message);
-            }
+        if (method_exists(parent::class, 'assertStringNotContainsString')) {
+            parent::assertStringNotContainsString($needle, $haystack, $message);
         } else {
+            // PHPUnit < 9
             parent::assertNotContains($needle, $haystack, $message);
         }
     }
 
     /**
-     * Asserts that a variable is of type array (PHPUnit 8+ compatible)
+     * Assert that an array contains a value
      *
-     * @param mixed $actual
+     * @param mixed $needle
+     * @param array $haystack
      * @param string $message
      */
-    public static function assertIsArray($actual, string $message = ''): void
+    protected static function assertArrayContainsValue($needle, array $haystack, string $message = ''): void
     {
-        if (method_exists(parent::class, 'assertIsArray')) {
-            parent::assertIsArray($actual, $message);
-        } else {
-            // PHPUnit < 8
-            parent::assertInternalType('array', $actual, $message);
-        }
+        parent::assertContains($needle, $haystack, $message);
     }
 }

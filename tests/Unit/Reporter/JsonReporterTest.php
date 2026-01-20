@@ -107,7 +107,7 @@ class JsonReporterTest extends TestCase
 
         $this->assertEquals(Issue::TYPE_UNUSED_CLASS, $issueData['type']);
         $this->assertEquals(Issue::SEVERITY_ERROR, $issueData['severity']);
-        $this->assertContains('never used', $issueData['message']);
+        $this->assertStringContains('never used', $issueData['message']);
         $this->assertEquals('App\\TestClass', $issueData['symbol']);
         $this->assertEquals('class', $issueData['symbolType']);
         $this->assertEquals('/src/TestClass.php', $issueData['file']);
@@ -178,7 +178,7 @@ class JsonReporterTest extends TestCase
         // Pretty output should be longer due to whitespace
         $this->assertGreaterThan(strlen($compactOutput), strlen($prettyOutput));
         // Pretty output should contain newlines
-        $this->assertContains("\n", $prettyOutput);
+        $this->assertStringContains("\n", $prettyOutput);
     }
 
     public function testMetadataIsIncluded()

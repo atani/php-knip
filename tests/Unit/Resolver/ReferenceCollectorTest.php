@@ -7,7 +7,6 @@ namespace PhpKnip\Tests\Unit\Resolver;
 
 use PhpKnip\Tests\TestCase;
 use PhpParser\NodeTraverser;
-use PhpParser\ParserFactory;
 use PhpKnip\Resolver\Reference;
 use PhpKnip\Resolver\ReferenceCollector;
 
@@ -20,8 +19,7 @@ class ReferenceCollectorTest extends TestCase
 
     protected function setUp(): void
     {
-        $factory = new ParserFactory();
-        $this->parser = $factory->create(ParserFactory::PREFER_PHP7);
+        $this->parser = $this->createParser();
     }
 
     /**

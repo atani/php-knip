@@ -35,7 +35,7 @@ class TextReporterTest extends TestCase
     {
         $output = $this->reporter->report(array());
 
-        $this->assertContains('No issues found', $output);
+        $this->assertStringContains('No issues found', $output);
     }
 
     public function testSingleIssueIsReported()
@@ -44,8 +44,8 @@ class TextReporterTest extends TestCase
 
         $output = $this->reporter->report(array($issue), array('colors' => false));
 
-        $this->assertContains('App\\UnusedClass', $output);
-        $this->assertContains('UnusedClass.php', $output);
+        $this->assertStringContains('App\\UnusedClass', $output);
+        $this->assertStringContains('UnusedClass.php', $output);
     }
 
     public function testMultipleIssuesGroupedByType()
@@ -58,10 +58,10 @@ class TextReporterTest extends TestCase
 
         $output = $this->reporter->report($issues, array('colors' => false, 'groupBy' => 'type'));
 
-        $this->assertContains('Unused Classes', $output);
-        $this->assertContains('Unused Functions', $output);
-        $this->assertContains('App\\ClassA', $output);
-        $this->assertContains('App\\func', $output);
+        $this->assertStringContains('Unused Classes', $output);
+        $this->assertStringContains('Unused Functions', $output);
+        $this->assertStringContains('App\\ClassA', $output);
+        $this->assertStringContains('App\\func', $output);
     }
 
     public function testIssuesGroupedByFile()
@@ -74,8 +74,8 @@ class TextReporterTest extends TestCase
 
         $output = $this->reporter->report($issues, array('colors' => false, 'groupBy' => 'file'));
 
-        $this->assertContains('File.php', $output);
-        $this->assertContains('Other.php', $output);
+        $this->assertStringContains('File.php', $output);
+        $this->assertStringContains('Other.php', $output);
     }
 
     public function testRelativePathsWithBasePath()
@@ -87,8 +87,8 @@ class TextReporterTest extends TestCase
             array('colors' => false, 'basePath' => '/var/www/project')
         );
 
-        $this->assertContains('src/Test.php', $output);
-        $this->assertNotContains('/var/www/project', $output);
+        $this->assertStringContains('src/Test.php', $output);
+        $this->assertStringNotContains('/var/www/project', $output);
     }
 
     public function testSummaryShowsTotals()
@@ -100,7 +100,7 @@ class TextReporterTest extends TestCase
 
         $output = $this->reporter->report($issues, array('colors' => false));
 
-        $this->assertContains('2 issues', $output);
+        $this->assertStringContains('2 issues', $output);
     }
 
     public function testSummaryShowsErrorAndWarningCounts()
@@ -112,8 +112,8 @@ class TextReporterTest extends TestCase
 
         $output = $this->reporter->report($issues, array('colors' => false));
 
-        $this->assertContains('1 error', $output);
-        $this->assertContains('1 warning', $output);
+        $this->assertStringContains('1 error', $output);
+        $this->assertStringContains('1 warning', $output);
     }
 
     public function testSeverityIconsAreShown()
@@ -125,7 +125,7 @@ class TextReporterTest extends TestCase
         $output = $this->reporter->report($issues, array('colors' => false));
 
         // Should contain error icon (without colors)
-        $this->assertContains('✖', $output);
+        $this->assertStringContains('✖', $output);
     }
 
     public function testLineNumbersAreIncluded()
@@ -134,7 +134,7 @@ class TextReporterTest extends TestCase
 
         $output = $this->reporter->report(array($issue), array('colors' => false));
 
-        $this->assertContains(':42', $output);
+        $this->assertStringContains(':42', $output);
     }
 
     public function testColorsCanBeDisabled()
@@ -144,7 +144,7 @@ class TextReporterTest extends TestCase
         $output = $this->reporter->report(array($issue), array('colors' => false));
 
         // Should not contain ANSI escape codes
-        $this->assertNotContains("\033[", $output);
+        $this->assertStringNotContains("\033[", $output);
     }
 
     public function testTypeLabelMapping()
@@ -164,7 +164,7 @@ class TextReporterTest extends TestCase
 
             $output = $this->reporter->report(array($issue), array('colors' => false));
 
-            $this->assertContains($expectedLabel, $output, "Type $type should have label $expectedLabel");
+            $this->assertStringContains($expectedLabel, $output, "Type $type should have label $expectedLabel");
         }
     }
 
@@ -178,7 +178,7 @@ class TextReporterTest extends TestCase
         $output = $this->reporter->report($issues, array('colors' => false));
 
         // Both should be present
-        $this->assertContains('App\\Error', $output);
-        $this->assertContains('App\\Warn', $output);
+        $this->assertStringContains('App\\Error', $output);
+        $this->assertStringContains('App\\Warn', $output);
     }
 }

@@ -35,11 +35,11 @@ class XmlReporterTest extends TestCase
     {
         $output = $this->reporter->report(array());
 
-        $this->assertContains('<?xml version="1.0" encoding="UTF-8"?>', $output);
-        $this->assertContains('<phpknip', $output);
-        $this->assertContains('<summary>', $output);
-        $this->assertContains('<total>0</total>', $output);
-        $this->assertContains('<issues/>', $output);
+        $this->assertStringContains('<?xml version="1.0" encoding="UTF-8"?>', $output);
+        $this->assertStringContains('<phpknip', $output);
+        $this->assertStringContains('<summary>', $output);
+        $this->assertStringContains('<total>0</total>', $output);
+        $this->assertStringContains('<issues/>', $output);
     }
 
     public function testSingleIssue()
@@ -56,12 +56,12 @@ class XmlReporterTest extends TestCase
 
         $output = $this->reporter->report(array($issue));
 
-        $this->assertContains('<total>1</total>', $output);
-        $this->assertContains('type="unused-classes"', $output);
-        $this->assertContains('severity="warning"', $output);
-        $this->assertContains('file="/path/to/UnusedClass.php"', $output);
-        $this->assertContains('line="10"', $output);
-        $this->assertContains('<symbol name="UnusedClass" type="class"/>', $output);
+        $this->assertStringContains('<total>1</total>', $output);
+        $this->assertStringContains('type="unused-classes"', $output);
+        $this->assertStringContains('severity="warning"', $output);
+        $this->assertStringContains('file="/path/to/UnusedClass.php"', $output);
+        $this->assertStringContains('line="10"', $output);
+        $this->assertStringContains('<symbol name="UnusedClass" type="class"/>', $output);
     }
 
     public function testMultipleIssues()
@@ -74,9 +74,9 @@ class XmlReporterTest extends TestCase
 
         $output = $this->reporter->report($issues);
 
-        $this->assertContains('<total>3</total>', $output);
-        $this->assertContains('<warning>2</warning>', $output);
-        $this->assertContains('<info>1</info>', $output);
+        $this->assertStringContains('<total>3</total>', $output);
+        $this->assertStringContains('<warning>2</warning>', $output);
+        $this->assertStringContains('<info>1</info>', $output);
     }
 
     public function testSeverityCounts()
@@ -90,9 +90,9 @@ class XmlReporterTest extends TestCase
 
         $output = $this->reporter->report($issues);
 
-        $this->assertContains('<error>1</error>', $output);
-        $this->assertContains('<warning>2</warning>', $output);
-        $this->assertContains('<info>1</info>', $output);
+        $this->assertStringContains('<error>1</error>', $output);
+        $this->assertStringContains('<warning>2</warning>', $output);
+        $this->assertStringContains('<info>1</info>', $output);
     }
 
     public function testGroupByFile()
@@ -111,8 +111,8 @@ class XmlReporterTest extends TestCase
             array('groupBy' => 'file')
         );
 
-        $this->assertContains('<file path="/path/to/FileA.php">', $output);
-        $this->assertContains('<file path="/path/to/FileB.php">', $output);
+        $this->assertStringContains('<file path="/path/to/FileA.php">', $output);
+        $this->assertStringContains('<file path="/path/to/FileB.php">', $output);
     }
 
     public function testGroupByType()
@@ -126,8 +126,8 @@ class XmlReporterTest extends TestCase
             array('groupBy' => 'type')
         );
 
-        $this->assertContains('<type name="unused-classes">', $output);
-        $this->assertContains('<type name="unused-functions">', $output);
+        $this->assertStringContains('<type name="unused-classes">', $output);
+        $this->assertStringContains('<type name="unused-functions">', $output);
     }
 
     public function testIssueWithMetadata()
@@ -139,11 +139,11 @@ class XmlReporterTest extends TestCase
 
         $output = $this->reporter->report(array($issue));
 
-        $this->assertContains('<metadata>', $output);
-        $this->assertContains('key="isDev"', $output);
-        $this->assertContains('value="true"', $output);
-        $this->assertContains('key="version"', $output);
-        $this->assertContains('value="1.0.0"', $output);
+        $this->assertStringContains('<metadata>', $output);
+        $this->assertStringContains('key="isDev"', $output);
+        $this->assertStringContains('value="true"', $output);
+        $this->assertStringContains('key="version"', $output);
+        $this->assertStringContains('value="1.0.0"', $output);
     }
 
     public function testOutputIsValidXml()
@@ -165,14 +165,14 @@ class XmlReporterTest extends TestCase
     {
         $output = $this->reporter->report(array());
 
-        $this->assertContains('timestamp="', $output);
+        $this->assertStringContains('timestamp="', $output);
     }
 
     public function testVersionIncluded()
     {
         $output = $this->reporter->report(array());
 
-        $this->assertContains('version="0.1.0"', $output);
+        $this->assertStringContains('version="0.1.0"', $output);
     }
 
     public function testMessageWithSpecialCharacters()
@@ -186,8 +186,8 @@ class XmlReporterTest extends TestCase
         $output = $this->reporter->report(array($issue));
 
         // Should be wrapped in CDATA
-        $this->assertContains('<![CDATA[', $output);
-        $this->assertContains("Class 'Test<Foo>&Bar' is unused", $output);
+        $this->assertStringContains('<![CDATA[', $output);
+        $this->assertStringContains("Class 'Test<Foo>&Bar' is unused", $output);
 
         // Output should still be valid XML
         $dom = new \DOMDocument();
@@ -219,10 +219,10 @@ class XmlReporterTest extends TestCase
 
         $output = $this->reporter->report($issues);
 
-        $this->assertContains('<by-type>', $output);
-        $this->assertContains('name="unused-classes"', $output);
-        $this->assertContains('count="2"', $output);
-        $this->assertContains('name="unused-functions"', $output);
-        $this->assertContains('count="1"', $output);
+        $this->assertStringContains('<by-type>', $output);
+        $this->assertStringContains('name="unused-classes"', $output);
+        $this->assertStringContains('count="2"', $output);
+        $this->assertStringContains('name="unused-functions"', $output);
+        $this->assertStringContains('count="1"', $output);
     }
 }
