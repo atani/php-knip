@@ -254,9 +254,10 @@ class FileAnalyzer implements AnalyzerInterface
     private function matchesPattern($name, $pattern)
     {
         // Convert glob pattern to regex
+        // Note: [^\/] requires escaped slash inside character class when using / as delimiter
         $regex = '/^' . str_replace(
             array('\\*\\*', '\\*', '\\?'),
-            array('.*', '[^/]*', '.'),
+            array('.*', '[^\\/]*', '.'),
             preg_quote($pattern, '/')
         ) . '$/';
 

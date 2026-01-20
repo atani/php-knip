@@ -260,4 +260,20 @@ class AnalysisContext
 
         return $this->pluginManager->getActivePluginNames();
     }
+
+    /**
+     * Check if a file should be ignored by plugins
+     *
+     * @param string $filePath File path
+     *
+     * @return bool
+     */
+    public function shouldPluginIgnoreFile($filePath)
+    {
+        if ($this->pluginManager === null) {
+            return false;
+        }
+
+        return $this->pluginManager->shouldIgnoreFile($filePath);
+    }
 }
