@@ -36,6 +36,7 @@ PHPプロジェクト向けのデッドコード検出ツールです。未使�
 
 - **フレームワーク対応**
   - Laravel（ServiceProvider、Controller、Route等の認識）
+  - WordPress（フック、テーマ、プラグイン、ウィジェット等の認識）
 
 ## インストール
 
@@ -227,6 +228,26 @@ Laravelプロジェクトを自動検出し、以下を考慮した解析を行�
 - **Model/Job/Event/Listener** - フレームワーク規約に基づいて認識
 - **設定ファイル** - config/*.php内のクラス参照を検出
 
+## WordPressプロジェクト対応
+
+WordPressプロジェクト（テーマ・プラグイン）を自動検出し、以下を考慮した解析を行います：
+
+- **フック** - `add_action`/`add_filter` のコールバック関数を参照として検出
+- **テーマ** - `functions.php` やテンプレートファイルをエントリポイントとして認識
+- **プラグイン** - プラグインヘッダーを持つファイルをエントリポイントとして認識
+- **ショートコード** - `add_shortcode` のコールバックを検出
+- **ウィジェット** - `WP_Widget` を継承したクラスを自動的に使用済みとして認識
+- **REST API** - `register_rest_route` のコールバックを検出
+- **WP-CLI** - `WP_CLI::add_command` で登録されたコマンドクラスを検出
+- **MU-Plugins** - `wp-content/mu-plugins/` 内のファイルをエントリポイントとして認識
+- **Drop-ins** - `object-cache.php`、`db.php` 等のドロップインを認識
+
+### 対応するプロジェクト構成
+
+- 標準的なWordPress構成（`wp-config.php`、`wp-content/`）
+- Composer管理のWordPress（`johnpbloch/wordpress`、`roots/wordpress`）
+- wpackagist経由のプラグイン/テーマ
+
 ## キャッシュ機能
 
 PHP-Knipは解析結果をキャッシュし、変更されたファイルのみ再解析することで高速化を実現します。
@@ -323,8 +344,8 @@ docker-compose run --rm php83 vendor/bin/phpunit
 - [x] 未使用プロパティ検出
 - [x] 未使用ファイル検出
 - [x] キャッシュ機能
+- [x] WordPressプラグイン
 - [ ] Symfonyプラグイン
-- [ ] WordPressプラグイン
 - [ ] 自動修正機能
 
 ## サポート

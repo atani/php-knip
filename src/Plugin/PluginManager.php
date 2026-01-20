@@ -101,9 +101,11 @@ class PluginManager
         // Register Laravel plugin
         $this->registerPlugin(new Laravel\LaravelPlugin());
 
+        // Register WordPress plugin
+        $this->registerPlugin(new WordPress\WordPressPlugin());
+
         // Future: Register more built-in plugins here
         // $this->registerPlugin(new Symfony\SymfonyPlugin());
-        // $this->registerPlugin(new WordPress\WordPressPlugin());
 
         return $this;
     }
