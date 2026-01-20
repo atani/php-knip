@@ -5,7 +5,7 @@
 
 namespace PhpKnip\Tests\Unit\Composer;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Composer\ComposerLockParser;
 
 class ComposerLockParserTest extends TestCase

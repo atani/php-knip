@@ -5,7 +5,7 @@
 
 namespace PhpKnip\Tests\Unit\Reporter;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Reporter\TextReporter;
 use PhpKnip\Analyzer\Issue;
 
@@ -16,7 +16,7 @@ class TextReporterTest extends TestCase
      */
     private $reporter;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->reporter = new TextReporter();
     }

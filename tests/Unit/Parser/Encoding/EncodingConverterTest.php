@@ -5,7 +5,7 @@
 
 namespace PhpKnip\Tests\Unit\Parser\Encoding;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Parser\Encoding\EncodingConverter;
 use PhpKnip\Parser\Encoding\EncodingDetector;
 
@@ -16,7 +16,7 @@ class EncodingConverterTest extends TestCase
      */
     private $converter;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->converter = new EncodingConverter();
     }

@@ -5,7 +5,7 @@
 
 namespace PhpKnip\Tests\Unit\Reporter;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Reporter\JsonReporter;
 use PhpKnip\Analyzer\Issue;
 
@@ -16,7 +16,7 @@ class JsonReporterTest extends TestCase
      */
     private $reporter;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->reporter = new JsonReporter();
     }
@@ -41,7 +41,7 @@ class JsonReporterTest extends TestCase
         $decoded = json_decode($output, true);
 
         $this->assertNotNull($decoded, 'Output should be valid JSON');
-        $this->assertInternalType('array', $decoded);
+        $this->assertIsArray($decoded);
     }
 
     public function testEmptyIssuesProducesValidJson()
@@ -228,7 +228,7 @@ class JsonReporterTest extends TestCase
         $decoded = json_decode($output, true);
 
         $this->assertCount(3, $decoded['issues']);
-        $this->assertInternalType('array', $decoded['issues']);
+        $this->assertIsArray($decoded['issues']);
         $this->assertArrayHasKey(0, $decoded['issues']);
         $this->assertArrayHasKey(1, $decoded['issues']);
         $this->assertArrayHasKey(2, $decoded['issues']);

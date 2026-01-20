@@ -7,7 +7,7 @@
 
 namespace PhpKnip\Tests\Integration;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Parser\AstBuilder;
 use PhpKnip\Resolver\SymbolCollector;
 use PhpKnip\Resolver\ReferenceCollector;
@@ -26,7 +26,7 @@ class AnalyzerIntegrationTest extends TestCase
      */
     private $astBuilder;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->astBuilder = new AstBuilder('auto');
     }

@@ -5,7 +5,7 @@
 
 namespace PhpKnip\Tests\Unit\Composer;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Composer\ComposerJsonParser;
 
 class ComposerJsonParserTest extends TestCase

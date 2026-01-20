@@ -7,7 +7,7 @@
 
 namespace PhpKnip\Tests\Integration;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Parser\AstBuilder;
 use PhpKnip\Parser\Encoding\EncodingDetector;
 use PhpKnip\Parser\Encoding\EncodingConverter;
@@ -37,7 +37,7 @@ class EncodingIntegrationTest extends TestCase
      */
     private $encodingConverter;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->encodingDetector = new EncodingDetector();
         $this->encodingConverter = new EncodingConverter($this->encodingDetector);
