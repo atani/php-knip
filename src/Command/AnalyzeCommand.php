@@ -38,6 +38,7 @@ use PhpKnip\Plugin\PluginManager;
 use PhpKnip\Cache\CacheManager;
 use PhpKnip\Resolver\Symbol;
 use PhpKnip\Resolver\Reference;
+use PhpKnip\Fixer\FixerManager;
 
 /**
  * Command to analyze PHP code for unused elements
@@ -115,6 +116,12 @@ class AnalyzeCommand extends Command
                 null,
                 InputOption::VALUE_NONE,
                 'Automatically fix issues where possible'
+            )
+            ->addOption(
+                'dry-run',
+                null,
+                InputOption::VALUE_NONE,
+                'Preview fixes without applying them (use with --fix)'
             )
             ->addOption(
                 'php-version',
@@ -398,7 +405,80 @@ class AnalyzeCommand extends Command
             $output->writeln('');
         }
 
-        // Phase 3: Report
+        // Phase 3: Auto-fix (if requested)
+        $fixMode = $input->getOption('fix');
+        $dryRun = $input->getOption('dry-run');
+
+        if ($fixMode && count($issues) > 0) {
+            $fixerManager = new FixerManager();
+            $fixerManager->registerBuiltinFixers();
+            $fixerManager->setDryRun($dryRun);
+
+            if ($showProgress) {
+                $output->writeln('<info>Running auto-fix...</info>');
+                if ($dryRun) {
+                    $output->writeln('<comment>(dry-run mode - no files will be modified)</comment>');
+                }
+                $output->writeln('');
+            }
+
+            $fixerManager->fixIssues($issues);
+            $summary = $fixerManager->getSummary();
+
+            if ($summary['successful'] > 0) {
+                if (!$dryRun) {
+                    $written = $fixerManager->applyFixes();
+                    $output->writeln(sprintf(
+                        '<info>Fixed %d issues in %d files</info>',
+                        $summary['successful'],
+                        count($written)
+                    ));
+                } else {
+                    $output->writeln(sprintf(
+                        '<info>Would fix %d issues in %d files (dry-run)</info>',
+                        $summary['successful'],
+                        $summary['files_modified']
+                    ));
+                }
+
+                // Show what was fixed
+                foreach ($fixerManager->getSuccessfulResults() as $result) {
+                    $issue = $result->getIssue();
+                    $prefix = $dryRun ? '  Would remove: ' : '  Removed: ';
+                    $output->writeln(sprintf(
+                        '%s<comment>%s</comment> at %s:%d',
+                        $prefix,
+                        $issue->getSymbolName(),
+                        basename($issue->getFilePath()),
+                        $issue->getLine()
+                    ));
+                }
+
+                $output->writeln('');
+
+                // Remove fixed issues from the report
+                if (!$dryRun) {
+                    $fixedIssues = array_map(function ($result) {
+                        return $result->getIssue();
+                    }, $fixerManager->getSuccessfulResults());
+
+                    $issues = array_filter($issues, function ($issue) use ($fixedIssues) {
+                        return !in_array($issue, $fixedIssues, true);
+                    });
+                    $issues = array_values($issues);
+                }
+            }
+
+            if ($summary['skipped'] > 0 && $showProgress) {
+                $output->writeln(sprintf(
+                    '<comment>Skipped %d issues (no fixer available)</comment>',
+                    $summary['skipped']
+                ));
+                $output->writeln('');
+            }
+        }
+
+        // Phase 4: Report
         $showColors = !$input->getOption('no-colors') && $output->isDecorated();
         $reporter = $this->getReporter($config['output']['format']);
         $reportOptions = array(
