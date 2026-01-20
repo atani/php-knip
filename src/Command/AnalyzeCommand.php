@@ -23,10 +23,17 @@ use PhpKnip\Analyzer\AnalysisContext;
 use PhpKnip\Analyzer\ClassAnalyzer;
 use PhpKnip\Analyzer\FunctionAnalyzer;
 use PhpKnip\Analyzer\UseStatementAnalyzer;
+use PhpKnip\Analyzer\MethodAnalyzer;
+use PhpKnip\Analyzer\ConstantAnalyzer;
+use PhpKnip\Analyzer\PropertyAnalyzer;
+use PhpKnip\Analyzer\FileAnalyzer;
 use PhpKnip\Reporter\TextReporter;
 use PhpKnip\Reporter\JsonReporter;
 use PhpKnip\Reporter\XmlReporter;
 use PhpKnip\Reporter\JunitReporter;
+use PhpKnip\Reporter\GithubReporter;
+use PhpKnip\Reporter\CsvReporter;
+use PhpKnip\Reporter\HtmlReporter;
 use PhpKnip\Plugin\PluginManager;
 
 /**
@@ -297,6 +304,10 @@ class AnalyzeCommand extends Command
             new ClassAnalyzer(),
             new FunctionAnalyzer(),
             new UseStatementAnalyzer(),
+            new MethodAnalyzer(),
+            new ConstantAnalyzer(),
+            new PropertyAnalyzer(),
+            new FileAnalyzer(),
         );
 
         foreach ($analyzers as $analyzer) {
@@ -412,6 +423,12 @@ class AnalyzeCommand extends Command
                 return new XmlReporter();
             case 'junit':
                 return new JunitReporter();
+            case 'github':
+                return new GithubReporter();
+            case 'csv':
+                return new CsvReporter();
+            case 'html':
+                return new HtmlReporter();
             case 'text':
             default:
                 return new TextReporter();
