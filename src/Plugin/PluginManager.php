@@ -113,10 +113,11 @@ class PluginManager
      *
      * @param string $projectRoot Project root directory
      * @param array $composerData Parsed composer.json data
+     * @param string $framework Framework setting ('auto' or specific framework name)
      *
      * @return $this
      */
-    public function activate($projectRoot, array $composerData)
+    public function activate($projectRoot, array $composerData, $framework = 'auto')
     {
         $this->projectRoot = $projectRoot;
         $this->composerData = $composerData;
@@ -124,7 +125,12 @@ class PluginManager
 
         // Check each plugin for applicability
         foreach ($this->plugins as $plugin) {
-            if ($plugin->isApplicable($projectRoot, $composerData)) {
+            // If specific framework is set, only activate matching plugin
+            if ($framework !== 'auto' && $framework !== null) {
+                if ($plugin->getName() === $framework) {
+                    $this->activePlugins[] = $plugin;
+                }
+            } elseif ($plugin->isApplicable($projectRoot, $composerData)) {
                 $this->activePlugins[] = $plugin;
             }
         }
