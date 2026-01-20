@@ -37,6 +37,7 @@ PHPプロジェクト向けのデッドコード検出ツールです。未使�
 - **フレームワーク対応**
   - Laravel（ServiceProvider、Controller、Route等の認識）
   - WordPress（フック、テーマ、プラグイン、ウィジェット等の認識）
+  - Symfony（Controller、Command、EventSubscriber、Doctrine等の認識）
 
 ## インストール
 
@@ -248,6 +249,27 @@ WordPressプロジェクト（テーマ・プラグイン）を自動検出し�
 - Composer管理のWordPress（`johnpbloch/wordpress`、`roots/wordpress`）
 - wpackagist経由のプラグイン/テーマ
 
+## Symfonyプロジェクト対応
+
+Symfonyプロジェクトを自動検出し、以下を考慮した解析を行います：
+
+- **Controller** - `src/Controller/` 内のコントローラークラスを自動的に使用済みとして認識
+- **Command** - コンソールコマンドクラスを検出
+- **EventSubscriber/Listener** - イベント処理クラスを検出
+- **Form Type** - フォームタイプクラスを認識
+- **Twig Extension** - Twig拡張クラスを認識
+- **Doctrine Entity/Repository** - エンティティとリポジトリを認識
+- **Message Handler** - Messengerハンドラーを認識
+- **Security Voter** - セキュリティVoterを認識
+- **services.yaml** - サービス定義からのクラス参照を検出
+- **routes.yaml** - ルート定義からのコントローラー参照を検出
+- **bundles.php** - バンドル登録からのクラス参照を検出
+
+### 対応するプロジェクト構成
+
+- Symfony Flex構成（`config/bundles.php`、`bin/console`）
+- `symfony/framework-bundle` または `symfony/http-kernel` を使用するプロジェクト
+
 ## キャッシュ機能
 
 PHP-Knipは解析結果をキャッシュし、変更されたファイルのみ再解析することで高速化を実現します。
@@ -345,7 +367,7 @@ docker-compose run --rm php83 vendor/bin/phpunit
 - [x] 未使用ファイル検出
 - [x] キャッシュ機能
 - [x] WordPressプラグイン
-- [ ] Symfonyプラグイン
+- [x] Symfonyプラグイン
 - [ ] 自動修正機能
 
 ## サポート
