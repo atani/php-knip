@@ -26,6 +26,13 @@ PHPプロジェクト向けのデッドコード検出ツールです。未使�
   - JSON
   - XML
   - JUnit XML（CI連携用）
+  - CSV
+  - GitHub Actions（アノテーション形式）
+  - HTML（レポート出力）
+
+- **高速化**
+  - ファイル単位のキャッシュ機能
+  - 変更ファイルのみ再解析
 
 - **フレームワーク対応**
   - Laravel（ServiceProvider、Controller、Route等の認識）
@@ -62,13 +69,15 @@ Arguments:
 
 Options:
   -c, --config=CONFIG          設定ファイルのパス
-  -f, --format=FORMAT          出力形式: text, json, xml, junit（デフォルト: text）
+  -f, --format=FORMAT          出力形式: text, json, xml, junit, csv, github, html（デフォルト: text）
   -o, --output=OUTPUT          出力ファイルパス（デフォルト: 標準出力）
       --rules=RULES            チェックするルール（カンマ区切り）
       --exclude=EXCLUDE        除外パターン（カンマ区切り）
       --encoding=ENCODING      エンコーディング指定（auto, utf-8, euc-jp, shift_jis）
       --php-version=VERSION    パース用PHPバージョン（5.6, 7.0, ..., 8.3）
       --no-colors              カラー出力を無効化
+      --no-cache               キャッシュを無効化
+      --clear-cache            キャッシュをクリアして実行
   -v, --verbose                詳細出力
   -h, --help                   ヘルプ表示
 ```
@@ -218,9 +227,51 @@ Laravelプロジェクトを自動検出し、以下を考慮した解析を行�
 - **Model/Job/Event/Listener** - フレームワーク規約に基づいて認識
 - **設定ファイル** - config/*.php内のクラス参照を検出
 
+## キャッシュ機能
+
+PHP-Knipは解析結果をキャッシュし、変更されたファイルのみ再解析することで高速化を実現します。
+
+### キャッシュの動作
+
+- キャッシュは `.php-knip-cache/` ディレクトリに保存されます
+- ファイルの更新日時とハッシュ値で変更を検出
+- 変更がないファイルはキャッシュから結果を取得
+
+### キャッシュの無効化
+
+```bash
+# キャッシュを使用せずに実行
+./vendor/bin/php-knip --no-cache
+
+# キャッシュをクリアして実行
+./vendor/bin/php-knip --clear-cache
+```
+
+### 設定ファイルでの設定
+
+```json
+{
+    "cache": {
+        "enabled": true,
+        "directory": ".php-knip-cache"
+    }
+}
+```
+
 ## CI連携
 
-### GitHub Actions
+### GitHub Actions（アノテーション形式）
+
+`--format=github` を使用すると、PRのコード行に直接アノテーションが表示されます：
+
+```yaml
+- name: Run PHP-Knip
+  run: ./vendor/bin/php-knip --format=github
+```
+
+### JUnit XML形式
+
+テスト結果として出力し、各種CIツールと連携できます：
 
 ```yaml
 - name: Run PHP-Knip
@@ -231,6 +282,14 @@ Laravelプロジェクトを自動検出し、以下を考慮した解析を行�
   with:
     name: php-knip-results
     path: php-knip-report.xml
+```
+
+### HTMLレポート
+
+静的HTMLファイルとしてレポートを生成できます：
+
+```bash
+./vendor/bin/php-knip --format=html --output=report.html
 ```
 
 ## 動作要件
@@ -259,9 +318,11 @@ docker-compose run --rm php83 vendor/bin/phpunit
 - [x] 未使用use文検出
 - [x] 未使用Composer依存検出
 - [x] Laravelプラグイン
-- [ ] 未使用メソッド検出
-- [ ] 未使用定数検出
-- [ ] 未使用プロパティ検出
+- [x] 未使用メソッド検出
+- [x] 未使用定数検出
+- [x] 未使用プロパティ検出
+- [x] 未使用ファイル検出
+- [x] キャッシュ機能
 - [ ] Symfonyプラグイン
 - [ ] WordPressプラグイン
 - [ ] 自動修正機能
