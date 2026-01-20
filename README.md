@@ -80,6 +80,8 @@ Options:
       --no-colors              カラー出力を無効化
       --no-cache               キャッシュを無効化
       --clear-cache            キャッシュをクリアして実行
+      --fix                    検出した問題を自動修正
+      --dry-run                修正をプレビュー（--fixと併用）
   -v, --verbose                詳細出力
   -h, --help                   ヘルプ表示
 ```
@@ -301,6 +303,51 @@ PHP-Knipは解析結果をキャッシュし、変更されたファイルのみ
 }
 ```
 
+## 自動修正機能
+
+検出した問題の一部を自動的に修正できます。現在は未使用use文の削除に対応しています。
+
+### 基本的な使い方
+
+```bash
+# 修正のプレビュー（dry-run: ファイルは変更されない）
+./vendor/bin/php-knip --fix --dry-run
+
+# 実際に修正を適用
+./vendor/bin/php-knip --fix
+```
+
+### 動作説明
+
+- `--fix` オプションを指定すると、修正可能な問題を自動的に修正します
+- `--dry-run` と併用すると、修正内容をプレビューできます（推奨）
+- 修正された問題はレポートから除外されます
+
+### 対応している修正
+
+| 問題タイプ | 修正内容 |
+|-----------|---------|
+| 未使用use文 | use文の行を削除 |
+
+### 出力例
+
+```
+フェーズ3: 自動修正...
+
+修正を適用:
+  ✔ src/Controller/HomeController.php:5 - Removed use statement 'DateTime' from line 5
+  ✔ src/Controller/HomeController.php:6 - Removed use statement 'App\Services\UnusedService' from line 6
+
+修正完了: 2 成功, 0 失敗, 1 スキップ
+修正されたファイル: 1 件
+```
+
+### 注意事項
+
+- 修正前に必ず `--dry-run` で確認することを推奨します
+- バージョン管理されていないファイルの修正は慎重に行ってください
+- 複数行にまたがるuse文は正しく処理されない場合があります
+
 ## CI連携
 
 ### GitHub Actions（アノテーション形式）
@@ -368,7 +415,7 @@ docker-compose run --rm php83 vendor/bin/phpunit
 - [x] キャッシュ機能
 - [x] WordPressプラグイン
 - [x] Symfonyプラグイン
-- [ ] 自動修正機能
+- [x] 自動修正機能
 
 ## サポート
 
