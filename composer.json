@@ -47,8 +47,8 @@
     ],
     "config": {
         "sort-packages": true,
-        "platform": {
-            "php": "5.6.40"
+        "allow-plugins": {
+            "phpstan/extension-installer": true
         }
     },
     "scripts": {
