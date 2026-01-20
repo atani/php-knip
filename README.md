@@ -266,6 +266,10 @@ docker-compose run --rm php83 vendor/bin/phpunit
 - [ ] WordPressプラグイン
 - [ ] 自動修正機能
 
+## サポート
+
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=github)](https://github.com/sponsors/atani)
+
 ## ライセンス
 
 MIT License
