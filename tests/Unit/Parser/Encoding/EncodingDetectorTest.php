@@ -5,7 +5,7 @@
 
 namespace PhpKnip\Tests\Unit\Parser\Encoding;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Parser\Encoding\EncodingDetector;
 
 class EncodingDetectorTest extends TestCase
@@ -15,7 +15,7 @@ class EncodingDetectorTest extends TestCase
      */
     private $detector;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->detector = new EncodingDetector();
     }

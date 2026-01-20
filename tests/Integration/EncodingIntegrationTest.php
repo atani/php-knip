@@ -7,7 +7,7 @@
 
 namespace PhpKnip\Tests\Integration;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Parser\AstBuilder;
 use PhpKnip\Parser\Encoding\EncodingDetector;
 use PhpKnip\Parser\Encoding\EncodingConverter;
@@ -37,7 +37,7 @@ class EncodingIntegrationTest extends TestCase
      */
     private $encodingConverter;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->encodingDetector = new EncodingDetector();
         $this->encodingConverter = new EncodingConverter($this->encodingDetector);
@@ -130,7 +130,7 @@ PHP;
 
             $unusedFunctions = $this->filterByType($issues, Issue::TYPE_UNUSED_FUNCTION);
             $this->assertCount(1, $unusedFunctions);
-            $this->assertContains('使われない関数', $unusedFunctions[0]->getSymbolName());
+            $this->assertStringContains('使われない関数', $unusedFunctions[0]->getSymbolName());
         } else {
             $this->markTestSkipped('mbstring extension not available');
         }
@@ -233,7 +233,7 @@ PHP;
 
         $unusedClasses = $this->filterByType($issues, Issue::TYPE_UNUSED_CLASS);
         $this->assertCount(1, $unusedClasses);
-        $this->assertContains('未使用BOMクラス', $unusedClasses[0]->getSymbolName());
+        $this->assertStringContains('未使用BOMクラス', $unusedClasses[0]->getSymbolName());
     }
 
     /**

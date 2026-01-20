@@ -5,7 +5,7 @@
 
 namespace PhpKnip\Tests\Unit\Plugin\Laravel;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Plugin\Laravel\LaravelPlugin;
 use PhpKnip\Resolver\SymbolTable;
 use PhpKnip\Resolver\Symbol;
@@ -22,14 +22,14 @@ class LaravelPluginTest extends TestCase
      */
     private $tempDir;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->plugin = new LaravelPlugin();
         $this->tempDir = sys_get_temp_dir() . '/php-knip-laravel-test-' . uniqid();
         mkdir($this->tempDir, 0777, true);
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->removeDirectory($this->tempDir);
     }

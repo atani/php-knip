@@ -5,7 +5,7 @@
 
 namespace PhpKnip\Tests\Unit\Reporter;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Reporter\JsonReporter;
 use PhpKnip\Analyzer\Issue;
 
@@ -16,7 +16,7 @@ class JsonReporterTest extends TestCase
      */
     private $reporter;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->reporter = new JsonReporter();
     }
@@ -41,7 +41,7 @@ class JsonReporterTest extends TestCase
         $decoded = json_decode($output, true);
 
         $this->assertNotNull($decoded, 'Output should be valid JSON');
-        $this->assertInternalType('array', $decoded);
+        $this->assertIsArray($decoded);
     }
 
     public function testEmptyIssuesProducesValidJson()
@@ -107,7 +107,7 @@ class JsonReporterTest extends TestCase
 
         $this->assertEquals(Issue::TYPE_UNUSED_CLASS, $issueData['type']);
         $this->assertEquals(Issue::SEVERITY_ERROR, $issueData['severity']);
-        $this->assertContains('never used', $issueData['message']);
+        $this->assertStringContains('never used', $issueData['message']);
         $this->assertEquals('App\\TestClass', $issueData['symbol']);
         $this->assertEquals('class', $issueData['symbolType']);
         $this->assertEquals('/src/TestClass.php', $issueData['file']);
@@ -178,7 +178,7 @@ class JsonReporterTest extends TestCase
         // Pretty output should be longer due to whitespace
         $this->assertGreaterThan(strlen($compactOutput), strlen($prettyOutput));
         // Pretty output should contain newlines
-        $this->assertContains("\n", $prettyOutput);
+        $this->assertStringContains("\n", $prettyOutput);
     }
 
     public function testMetadataIsIncluded()
@@ -228,7 +228,7 @@ class JsonReporterTest extends TestCase
         $decoded = json_decode($output, true);
 
         $this->assertCount(3, $decoded['issues']);
-        $this->assertInternalType('array', $decoded['issues']);
+        $this->assertIsArray($decoded['issues']);
         $this->assertArrayHasKey(0, $decoded['issues']);
         $this->assertArrayHasKey(1, $decoded['issues']);
         $this->assertArrayHasKey(2, $decoded['issues']);

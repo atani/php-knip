@@ -5,7 +5,7 @@
 
 namespace PhpKnip\Tests\Unit\Plugin;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Plugin\PluginManager;
 use PhpKnip\Plugin\PluginInterface;
 use PhpKnip\Plugin\AbstractPlugin;
@@ -18,7 +18,7 @@ class PluginManagerTest extends TestCase
      */
     private $manager;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->manager = new PluginManager();
     }

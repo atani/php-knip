@@ -5,7 +5,7 @@
 
 namespace PhpKnip\Tests\Unit\Reporter;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Reporter\JunitReporter;
 use PhpKnip\Analyzer\Issue;
 
@@ -16,7 +16,7 @@ class JunitReporterTest extends TestCase
      */
     private $reporter;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->reporter = new JunitReporter();
     }
@@ -35,11 +35,11 @@ class JunitReporterTest extends TestCase
     {
         $output = $this->reporter->report(array());
 
-        $this->assertContains('<?xml version="1.0" encoding="UTF-8"?>', $output);
-        $this->assertContains('<testsuites name="php-knip"', $output);
-        $this->assertContains('tests="0"', $output);
-        $this->assertContains('failures="0"', $output);
-        $this->assertContains('errors="0"', $output);
+        $this->assertStringContains('<?xml version="1.0" encoding="UTF-8"?>', $output);
+        $this->assertStringContains('<testsuites name="php-knip"', $output);
+        $this->assertStringContains('tests="0"', $output);
+        $this->assertStringContains('failures="0"', $output);
+        $this->assertStringContains('errors="0"', $output);
     }
 
     public function testSingleIssue()
@@ -56,11 +56,11 @@ class JunitReporterTest extends TestCase
 
         $output = $this->reporter->report(array($issue));
 
-        $this->assertContains('tests="1"', $output);
-        $this->assertContains('failures="1"', $output);
-        $this->assertContains('<testsuite name="Unused classes"', $output);
-        $this->assertContains('<testcase name="UnusedClass"', $output);
-        $this->assertContains('<failure type="unused-classes"', $output);
+        $this->assertStringContains('tests="1"', $output);
+        $this->assertStringContains('failures="1"', $output);
+        $this->assertStringContains('<testsuite name="Unused classes"', $output);
+        $this->assertStringContains('<testcase name="UnusedClass"', $output);
+        $this->assertStringContains('<failure type="unused-classes"', $output);
     }
 
     public function testErrorSeverityCreatesErrorElement()
@@ -74,9 +74,9 @@ class JunitReporterTest extends TestCase
 
         $output = $this->reporter->report(array($issue));
 
-        $this->assertContains('errors="1"', $output);
-        $this->assertContains('failures="0"', $output);
-        $this->assertContains('<error type="unused-classes"', $output);
+        $this->assertStringContains('errors="1"', $output);
+        $this->assertStringContains('failures="0"', $output);
+        $this->assertStringContains('<error type="unused-classes"', $output);
     }
 
     public function testWarningSeverityCreatesFailureElement()
@@ -90,8 +90,8 @@ class JunitReporterTest extends TestCase
 
         $output = $this->reporter->report(array($issue));
 
-        $this->assertContains('failures="1"', $output);
-        $this->assertContains('<failure type="unused-classes"', $output);
+        $this->assertStringContains('failures="1"', $output);
+        $this->assertStringContains('<failure type="unused-classes"', $output);
     }
 
     public function testInfoSeverityCreatesFailureElement()
@@ -105,8 +105,8 @@ class JunitReporterTest extends TestCase
 
         $output = $this->reporter->report(array($issue));
 
-        $this->assertContains('failures="1"', $output);
-        $this->assertContains('<failure type="unused-use-statements"', $output);
+        $this->assertStringContains('failures="1"', $output);
+        $this->assertStringContains('<failure type="unused-use-statements"', $output);
     }
 
     public function testMultipleIssuesGroupedByType()
@@ -119,9 +119,9 @@ class JunitReporterTest extends TestCase
 
         $output = $this->reporter->report($issues);
 
-        $this->assertContains('tests="3"', $output);
-        $this->assertContains('<testsuite name="Unused classes"', $output);
-        $this->assertContains('<testsuite name="Unused functions"', $output);
+        $this->assertStringContains('tests="3"', $output);
+        $this->assertStringContains('<testsuite name="Unused classes"', $output);
+        $this->assertStringContains('<testsuite name="Unused functions"', $output);
     }
 
     public function testTestsuiteHasCorrectCounts()
@@ -154,8 +154,8 @@ class JunitReporterTest extends TestCase
 
         $output = $this->reporter->report(array($issue));
 
-        $this->assertContains('file="/path/to/Test.php"', $output);
-        $this->assertContains('line="42"', $output);
+        $this->assertStringContains('file="/path/to/Test.php"', $output);
+        $this->assertStringContains('line="42"', $output);
     }
 
     public function testTestcaseClassnameFromFilePath()
@@ -166,7 +166,7 @@ class JunitReporterTest extends TestCase
 
         $output = $this->reporter->report(array($issue));
 
-        $this->assertContains('classname="src.Service.UserService"', $output);
+        $this->assertStringContains('classname="src.Service.UserService"', $output);
     }
 
     public function testOutputIsValidXml()
@@ -195,10 +195,10 @@ class JunitReporterTest extends TestCase
         $output = $this->reporter->report(array($issue));
 
         // Content should include detailed information
-        $this->assertContains('Type: unused-dependencies', $output);
-        $this->assertContains('Severity: warning', $output);
-        $this->assertContains('Symbol: vendor/package (dependency)', $output);
-        $this->assertContains('isDev: true', $output);
+        $this->assertStringContains('Type: unused-dependencies', $output);
+        $this->assertStringContains('Severity: warning', $output);
+        $this->assertStringContains('Symbol: vendor/package (dependency)', $output);
+        $this->assertStringContains('isDev: true', $output);
     }
 
     public function testIssueWithoutSymbolNameGeneratesName()
@@ -210,7 +210,7 @@ class JunitReporterTest extends TestCase
         $output = $this->reporter->report(array($issue));
 
         // Should generate a name from type, file, line
-        $this->assertContains('name="unused-use-statements - File.php - line 5"', $output);
+        $this->assertStringContains('name="unused-use-statements - File.php - line 5"', $output);
     }
 
     public function testMessageWithSpecialCharacters()
@@ -230,7 +230,7 @@ class JunitReporterTest extends TestCase
         $this->assertTrue($result);
 
         // Should be in CDATA
-        $this->assertContains('<![CDATA[', $output);
+        $this->assertStringContains('<![CDATA[', $output);
     }
 
     public function testPrettyPrintOption()
@@ -276,7 +276,7 @@ class JunitReporterTest extends TestCase
 
         $output = $this->reporter->report(array($issue));
 
-        $this->assertContains('classname="unused-dependencies"', $output);
+        $this->assertStringContains('classname="unused-dependencies"', $output);
     }
 
     public function testTypeNameIsFormatted()
@@ -287,6 +287,6 @@ class JunitReporterTest extends TestCase
         $output = $this->reporter->report(array($issue));
 
         // "unused-use-statements" should become "Unused use statements"
-        $this->assertContains('name="Unused use statements"', $output);
+        $this->assertStringContains('name="Unused use statements"', $output);
     }
 }

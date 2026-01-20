@@ -5,7 +5,7 @@
 
 namespace PhpKnip\Tests\Unit\Analyzer;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Analyzer\DependencyAnalyzer;
 use PhpKnip\Analyzer\AnalysisContext;
 use PhpKnip\Analyzer\Issue;
@@ -22,7 +22,7 @@ class DependencyAnalyzerTest extends TestCase
      */
     private $analyzer;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->analyzer = new DependencyAnalyzer();
     }

@@ -5,9 +5,8 @@
 
 namespace PhpKnip\Tests\Unit\Resolver;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpParser\NodeTraverser;
-use PhpParser\ParserFactory;
 use PhpKnip\Resolver\Symbol;
 use PhpKnip\Resolver\SymbolTable;
 use PhpKnip\Resolver\SymbolCollector;
@@ -19,10 +18,9 @@ class SymbolCollectorTest extends TestCase
      */
     private $parser;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $factory = new ParserFactory();
-        $this->parser = $factory->create(ParserFactory::PREFER_PHP7);
+        $this->parser = $this->createParser();
     }
 
     /**

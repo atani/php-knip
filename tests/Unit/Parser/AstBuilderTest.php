@@ -5,7 +5,7 @@
 
 namespace PhpKnip\Tests\Unit\Parser;
 
-use PHPUnit\Framework\TestCase;
+use PhpKnip\Tests\TestCase;
 use PhpKnip\Parser\AstBuilder;
 
 class AstBuilderTest extends TestCase
@@ -15,7 +15,7 @@ class AstBuilderTest extends TestCase
      */
     private $builder;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->builder = new AstBuilder();
     }
@@ -37,7 +37,7 @@ PHP;
 
         $this->assertNotNull($ast);
         $this->assertFalse($this->builder->hasErrors());
-        $this->assertInternalType('array', $ast);
+        $this->assertIsArray($ast);
         $this->assertGreaterThan(0, count($ast));
     }
 
