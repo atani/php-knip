@@ -25,6 +25,8 @@ use PhpKnip\Analyzer\FunctionAnalyzer;
 use PhpKnip\Analyzer\UseStatementAnalyzer;
 use PhpKnip\Reporter\TextReporter;
 use PhpKnip\Reporter\JsonReporter;
+use PhpKnip\Reporter\XmlReporter;
+use PhpKnip\Reporter\JunitReporter;
 use PhpKnip\Plugin\PluginManager;
 
 /**
@@ -65,8 +67,7 @@ class AnalyzeCommand extends Command
                 'format',
                 'f',
                 InputOption::VALUE_REQUIRED,
-                'Output format (text, json, xml, junit, github, csv, html)',
-                'text'
+                'Output format (text, json, xml, junit, github, csv, html)'
             )
             ->addOption(
                 'output',
@@ -150,8 +151,6 @@ class AnalyzeCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $output->writeln('<info>PHP-Knip - Dead Code Detector</info>');
-        $output->writeln('');
 
         $path = $input->getArgument('path');
         $configFile = $input->getOption('config');
@@ -169,14 +168,25 @@ class AnalyzeCommand extends Command
         // Merge CLI options into config
         $config = $this->mergeCliOptions($config, $input);
 
-        $output->writeln(sprintf('Analyzing: <comment>%s</comment>', $realPath));
-        $output->writeln(sprintf('Encoding: <comment>%s</comment>', $config['encoding']));
-        $output->writeln('');
+        // Check if progress output is enabled
+        $showProgress = isset($config['output']['show_progress']) ? $config['output']['show_progress'] : true;
+
+        if ($showProgress) {
+            $output->writeln('<info>PHP-Knip - Dead Code Detector</info>');
+            $output->writeln('');
+            $output->writeln(sprintf('Analyzing: <comment>%s</comment>', $realPath));
+            $output->writeln(sprintf('Encoding: <comment>%s</comment>', $config['encoding']));
+            $output->writeln('');
+        }
 
         // Find PHP files
-        $output->write('Finding PHP files... ');
+        if ($showProgress) {
+            $output->write('Finding PHP files... ');
+        }
         $files = $this->findPhpFiles($realPath, $config);
-        $output->writeln(sprintf('<info>%d files found</info>', count($files)));
+        if ($showProgress) {
+            $output->writeln(sprintf('<info>%d files found</info>', count($files)));
+        }
 
         if (empty($files)) {
             $output->writeln('<comment>No PHP files found to analyze.</comment>');
@@ -184,7 +194,9 @@ class AnalyzeCommand extends Command
         }
 
         // Phase 1: Parse files and collect symbols
-        $output->write('Parsing files... ');
+        if ($showProgress) {
+            $output->write('Parsing files... ');
+        }
         $astBuilder = new AstBuilder(
             isset($config['php_version']) ? $config['php_version'] : 'auto',
             $config['encoding'] !== 'auto' ? $config['encoding'] : null
@@ -224,7 +236,9 @@ class AnalyzeCommand extends Command
             $parsedCount++;
         }
 
-        $output->writeln(sprintf('<info>%d parsed</info> (%d errors)', $parsedCount, $errorCount));
+        if ($showProgress) {
+            $output->writeln(sprintf('<info>%d parsed</info> (%d errors)', $parsedCount, $errorCount));
+        }
 
         // Show parse errors if any
         if ($astBuilder->hasErrors() && $output->isVerbose()) {
@@ -236,7 +250,9 @@ class AnalyzeCommand extends Command
         }
 
         // Phase 2: Analysis
-        $output->write('Analyzing... ');
+        if ($showProgress) {
+            $output->write('Analyzing... ');
+        }
 
         // Set up plugin manager
         $pluginManager = new PluginManager();
@@ -256,7 +272,8 @@ class AnalyzeCommand extends Command
         }
 
         // Activate applicable plugins
-        $pluginManager->activate($realPath, $composerData);
+        $framework = isset($config['framework']) ? $config['framework'] : 'auto';
+        $pluginManager->activate($realPath, $composerData, $framework);
 
         // Show active plugins
         $activePlugins = $pluginManager->getActivePluginNames();
@@ -287,12 +304,14 @@ class AnalyzeCommand extends Command
             $issues = array_merge($issues, $analyzerIssues);
         }
 
-        $output->writeln(sprintf('<info>%d issues found</info>', count($issues)));
-        $output->writeln('');
+        if ($showProgress) {
+            $output->writeln(sprintf('<info>%d issues found</info>', count($issues)));
+            $output->writeln('');
+        }
 
         // Phase 3: Report
         $showColors = !$input->getOption('no-colors') && $output->isDecorated();
-        $reporter = $this->getReporter($input->getOption('format'));
+        $reporter = $this->getReporter($config['output']['format']);
         $reportOptions = array(
             'colors' => $showColors,
             'basePath' => $realPath,
@@ -389,6 +408,10 @@ class AnalyzeCommand extends Command
         switch ($format) {
             case 'json':
                 return new JsonReporter();
+            case 'xml':
+                return new XmlReporter();
+            case 'junit':
+                return new JunitReporter();
             case 'text':
             default:
                 return new TextReporter();
@@ -413,8 +436,12 @@ class AnalyzeCommand extends Command
             $config['php_version'] = $input->getOption('php-version');
         }
 
-        if ($input->getOption('format')) {
-            $config['output']['format'] = $input->getOption('format');
+        // Format: CLI option overrides config, default to 'text'
+        $cliFormat = $input->getOption('format');
+        if ($cliFormat !== null) {
+            $config['output']['format'] = $cliFormat;
+        } elseif (!isset($config['output']['format'])) {
+            $config['output']['format'] = 'text';
         }
 
         if ($input->getOption('strict')) {
