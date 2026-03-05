@@ -21,6 +21,7 @@ class ParserFactory
     /**
      * PHP version constants
      */
+    const PHP_4 = '4';
     const PHP_5 = '5';
     const PHP_7 = '7';
     const PHP_8 = '8';
@@ -67,7 +68,9 @@ class ParserFactory
 
         // For specific versions, use createForVersion if available
         if (method_exists($factory, 'createForVersion') && class_exists('PhpParser\\PhpVersion')) {
-            $phpVersionObj = \PhpParser\PhpVersion::fromString($phpVersion);
+            // PHP 4 is not directly supported by php-parser; use PHP 5 parser
+            $versionString = $this->getMajorVersion($phpVersion) === self::PHP_4 ? '5.6' : $phpVersion;
+            $phpVersionObj = \PhpParser\PhpVersion::fromString($versionString);
             return $factory->createForVersion($phpVersionObj);
         }
 
@@ -106,6 +109,7 @@ class ParserFactory
         $majorVersion = $this->getMajorVersion($phpVersion);
 
         switch ($majorVersion) {
+            case self::PHP_4:
             case self::PHP_5:
                 return defined('PhpParser\\ParserFactory::PREFER_PHP5')
                     ? PhpParserFactory::PREFER_PHP5
@@ -160,7 +164,8 @@ class ParserFactory
         $majorVersion = $this->getMajorVersion($phpVersion);
 
         // PHP-Parser v3 uses different class names
-        if ($majorVersion === self::PHP_5 && class_exists('PhpParser\\Parser\\Php5')) {
+        // PHP 4 code is parsed using the PHP 5 parser (syntax is a subset)
+        if (($majorVersion === self::PHP_4 || $majorVersion === self::PHP_5) && class_exists('PhpParser\\Parser\\Php5')) {
             return new \PhpParser\Parser\Php5($lexer);
         }
 
@@ -202,6 +207,16 @@ class ParserFactory
         // Check for PHP 7+ features
         if ($this->hasPHP7Features($code)) {
             return '7.0';
+        }
+
+        // Check for PHP 5+ features (namespaces, traits, etc.)
+        if ($this->hasPHP5Features($code)) {
+            return '5.6';
+        }
+
+        // Check for PHP 4 patterns (no PHP 5+ features detected)
+        if ($this->hasPHP4Patterns($code)) {
+            return '4.4';
         }
 
         // Default to PHP 5.6 for legacy code
@@ -278,6 +293,80 @@ class ParserFactory
     }
 
     /**
+     * Check for PHP 5 specific features (not present in PHP 4)
+     *
+     * @param string $code PHP source code
+     *
+     * @return bool True if PHP 5 features detected
+     */
+    private function hasPHP5Features($code)
+    {
+        // Namespaces
+        if (preg_match('/\bnamespace\s+[\w\\\\]+/', $code)) {
+            return true;
+        }
+
+        // Traits
+        if (preg_match('/\btrait\s+\w+/', $code)) {
+            return true;
+        }
+
+        // Visibility modifiers on methods/properties (public/protected/private)
+        if (preg_match('/\b(public|protected|private)\s+(\$|function\s)/', $code)) {
+            return true;
+        }
+
+        // Abstract/final classes
+        if (preg_match('/\b(abstract|final)\s+class\b/', $code)) {
+            return true;
+        }
+
+        // Type hints (PHP 5 style)
+        if (preg_match('/function\s+\w+\s*\([^)]*\b(array|callable)\s+\$/', $code)) {
+            return true;
+        }
+
+        // try-catch (PHP 5+)
+        if (preg_match('/\btry\s*\{/', $code)) {
+            return true;
+        }
+
+        // __construct method (PHP 5+ style constructor)
+        if (preg_match('/function\s+__construct\s*\(/', $code)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check for PHP 4 patterns
+     *
+     * @param string $code PHP source code
+     *
+     * @return bool True if PHP 4 patterns detected
+     */
+    private function hasPHP4Patterns($code)
+    {
+        // var keyword for property declarations
+        if (preg_match('/\bvar\s+\$\w+/', $code)) {
+            return true;
+        }
+
+        // Old-style constructor (method name matches class name)
+        if (preg_match('/class\s+(\w+)\s*(?:extends\s+\w+\s*)?\{[^}]*function\s+\1\s*\(/s', $code)) {
+            return true;
+        }
+
+        // Classes without visibility modifiers
+        if (preg_match('/class\s+\w+/', $code) && !preg_match('/\b(public|protected|private)\b/', $code)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Get supported PHP versions
      *
      * @return array List of supported PHP versions
@@ -285,6 +374,7 @@ class ParserFactory
     public function getSupportedVersions()
     {
         return array(
+            '4.4',
             '5.6',
             '7.0',
             '7.1',

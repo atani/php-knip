@@ -82,6 +82,11 @@ class MethodAnalyzer implements AnalyzerInterface
                 continue;
             }
 
+            // Skip old-style constructors (PHP 4: method name matches class name)
+            if ($method->getMetadata('isOldStyleConstructor')) {
+                continue;
+            }
+
             // Skip if called
             if ($this->isMethodCalled($methodName, $className, $calledMethods)) {
                 continue;
