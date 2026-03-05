@@ -308,6 +308,14 @@ class SymbolCollector extends NodeVisitorAbstract
             $symbol->setMetadata('isMagic', true);
         }
 
+        // Mark old-style constructors (PHP 4: method name matches class name)
+        if ($this->currentClass !== null) {
+            $shortClassName = $this->getShortClassName($this->currentClass);
+            if (strcasecmp($methodName, $shortClassName) === 0) {
+                $symbol->setMetadata('isOldStyleConstructor', true);
+            }
+        }
+
         $this->symbolTable->add($symbol);
     }
 
@@ -468,6 +476,19 @@ class SymbolCollector extends NodeVisitorAbstract
             return Symbol::VISIBILITY_PROTECTED;
         }
         return Symbol::VISIBILITY_PUBLIC;
+    }
+
+    /**
+     * Get short class name from fully qualified name
+     *
+     * @param string $fqn Fully qualified class name
+     *
+     * @return string Short class name
+     */
+    private function getShortClassName($fqn)
+    {
+        $parts = explode('\\', $fqn);
+        return end($parts);
     }
 
     /**
