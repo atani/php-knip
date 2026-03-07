@@ -330,6 +330,7 @@ class SymbolCollector extends NodeVisitorAbstract
         // Mark old-style constructors (PHP 4: method name matches class name)
         // Only applies to classes (not interfaces, traits, or enums)
         // Skip if: namespaced (PHP 7+ ignores old-style constructors in namespaces)
+        //   Note: bracketed global namespace `namespace { }` sets currentNamespace to null (correct)
         // Skip if: __construct exists (it takes precedence, same-named method is just a regular method)
         if ($this->currentIsClass && $this->currentNamespace === null && !$this->currentClassHasConstruct) {
             $shortClassName = $this->getShortClassName($this->currentClass);

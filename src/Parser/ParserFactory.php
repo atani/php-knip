@@ -377,9 +377,11 @@ class ParserFactory
             }
         }
 
-        // Classes without visibility modifiers
-        // Known limitation: checks visibility keywords anywhere in the file, not scoped to class body.
-        // Visibility keywords inside strings or comments may cause false negatives.
+        // Classes without visibility modifiers (heuristic for PHP 4 style code)
+        // Known limitations:
+        // - Checks visibility keywords anywhere in the file, not scoped to class body
+        // - Visibility keywords inside strings or comments may cause false negatives
+        // - PHP 5+ code that omits visibility also matches, but hasPHP5Features is checked first
         if (preg_match('/\bclass\s+\w+/', $code) && !preg_match('/\b(public|protected|private)\b/', $code)) {
             return true;
         }

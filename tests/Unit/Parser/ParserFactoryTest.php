@@ -421,6 +421,18 @@ class Foo {
         $this->assertEquals('5.6', $this->factory->detectVersion($code));
     }
 
+    public function testDetectVersionPHP8TakesPriorityOverPHP4()
+    {
+        // PHP 8 features should take priority over PHP 4 patterns
+        $code = '<?php
+#[Attribute]
+class Config {
+    var $settings;
+    function Config() { $this->settings = []; }
+}';
+        $this->assertEquals('8.0', $this->factory->detectVersion($code));
+    }
+
     public function testDetectVersionMultipleClassesNoFalseOldStyleConstructor()
     {
         // function Foo() exists in class Bar - the two-step regex should still match

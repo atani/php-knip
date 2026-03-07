@@ -17,12 +17,33 @@ class AnalyzeCommandTest extends TestCase
      */
     private $commandTester;
 
+    /**
+     * @var string|null
+     */
+    private $tmpDir;
+
     protected function setUp(): void
     {
         $application = new Application();
         $application->add(new AnalyzeCommand());
         $command = $application->find('analyze');
         $this->commandTester = new CommandTester($command);
+    }
+
+    protected function tearDown(): void
+    {
+        if ($this->tmpDir !== null && is_dir($this->tmpDir)) {
+            rmdir($this->tmpDir);
+            $this->tmpDir = null;
+        }
+    }
+
+    private function createTmpDir()
+    {
+        $this->tmpDir = sys_get_temp_dir() . '/php_knip_test_empty_' . uniqid();
+        mkdir($this->tmpDir);
+
+        return $this->tmpDir;
     }
 
     public function testUnsupportedPhpVersionThrowsException()
@@ -51,36 +72,39 @@ class AnalyzeCommandTest extends TestCase
         }
     }
 
-    public function testValidPhpVersionIsAccepted()
+    /**
+     * @dataProvider validVersionProvider
+     */
+    public function testValidPhpVersionIsAccepted($version)
     {
-        $tmpDir = sys_get_temp_dir() . '/php_knip_test_empty_' . uniqid();
-        mkdir($tmpDir);
+        $tmpDir = $this->createTmpDir();
 
-        try {
-            $this->commandTester->execute(array(
-                'path' => $tmpDir,
-                '--php-version' => '4.4',
-            ));
-            $this->assertEquals(0, $this->commandTester->getStatusCode());
-        } finally {
-            rmdir($tmpDir);
-        }
+        $this->commandTester->execute(array(
+            'path' => $tmpDir,
+            '--php-version' => $version,
+        ));
+        $this->assertEquals(0, $this->commandTester->getStatusCode());
+    }
+
+    public static function validVersionProvider()
+    {
+        return array(
+            'PHP 4.4' => array('4.4'),
+            'PHP 5.6' => array('5.6'),
+            'PHP 7.4' => array('7.4'),
+            'PHP 8.3' => array('8.3'),
+        );
     }
 
     public function testAutoPhpVersionIsAccepted()
     {
-        $tmpDir = sys_get_temp_dir() . '/php_knip_test_empty_' . uniqid();
-        mkdir($tmpDir);
+        $tmpDir = $this->createTmpDir();
 
-        try {
-            $this->commandTester->execute(array(
-                'path' => $tmpDir,
-                '--php-version' => 'auto',
-            ));
-            $this->assertEquals(0, $this->commandTester->getStatusCode());
-        } finally {
-            rmdir($tmpDir);
-        }
+        $this->commandTester->execute(array(
+            'path' => $tmpDir,
+            '--php-version' => 'auto',
+        ));
+        $this->assertEquals(0, $this->commandTester->getStatusCode());
     }
 
     /**
