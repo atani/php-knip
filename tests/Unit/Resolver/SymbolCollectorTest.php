@@ -394,6 +394,21 @@ class SymbolCollectorTest extends TestCase
         $this->assertFalse($methods[0]->getMetadataValue('isOldStyleConstructor', false));
     }
 
+    public function testConstructHelperMethodDoesNotSuppressOldStyleConstructor()
+    {
+        // __construct_helper is NOT __construct, so same-named method should still be marked
+        $code = '<?php class Foo { function __construct_helper() {} function Foo() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $methodsByName = array();
+        foreach ($methods as $method) {
+            $methodsByName[$method->getName()] = $method;
+        }
+
+        $this->assertTrue($methodsByName['Foo']->getMetadataValue('isOldStyleConstructor', false));
+    }
+
     public function testClassFollowedByEnumSameNameNotMarkedAsConstructor()
     {
         // Verify that after processing a class, an enum's same-named method

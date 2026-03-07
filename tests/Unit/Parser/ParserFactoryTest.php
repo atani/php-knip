@@ -390,6 +390,37 @@ class MyClass {
         $this->assertEquals('5.6', $this->factory->detectVersion($code));
     }
 
+    public function testDetectVersionClassNameContainingInterfaceNotConfused()
+    {
+        // 'UserInterface' as class name should NOT trigger interface detection
+        // because the regex uses \binterface\s+\w+ which requires interface as standalone keyword
+        $code = '<?php
+class UserInterface {
+    function render() {}
+}';
+        // No PHP 5 features, class without visibility -> PHP 4
+        $this->assertEquals('4.4', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionProceduralCodeWithFunctionsOnly()
+    {
+        // Procedural PHP 4 code without classes should fallback to default
+        $code = '<?php
+function add($a, $b) { return $a + $b; }
+function multiply($a, $b) { return $a * $b; }
+';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP56ForPublicStaticFunction()
+    {
+        $code = '<?php
+class Foo {
+    public static function create() { return new self(); }
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
     public function testDetectVersionMultipleClassesNoFalseOldStyleConstructor()
     {
         // function Foo() exists in class Bar - the two-step regex should still match

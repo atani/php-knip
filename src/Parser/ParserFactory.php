@@ -316,7 +316,7 @@ class ParserFactory
         }
 
         // Visibility modifiers on methods/properties (public/protected/private)
-        if (preg_match('/\b(public|protected|private)\s+(\$|function\s)/', $code)) {
+        if (preg_match('/\b(public|protected|private)\s+(static\s+)?(\$|function\s)/', $code)) {
             return true;
         }
 
