@@ -336,6 +336,11 @@ class ParserFactory
             return true;
         }
 
+        // Interface declarations or implements clause (PHP 5+)
+        if (preg_match('/\b(interface\s+\w+|implements\s+\w+)/', $code)) {
+            return true;
+        }
+
         return false;
     }
 

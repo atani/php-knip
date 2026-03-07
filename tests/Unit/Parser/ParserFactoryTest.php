@@ -215,4 +215,62 @@ class MyClass {
 class Controller {}';
         $this->assertEquals('8.0', $this->factory->detectVersion($code));
     }
+
+    public function testDetectVersionReturnsPHP56ForVarWithVisibility()
+    {
+        $code = '<?php
+class Foo {
+    var $x;
+    public function test() {}
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP56ForInterfaceDeclaration()
+    {
+        $code = '<?php
+interface Loggable {
+    function log($message);
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP56ForImplementsClause()
+    {
+        $code = '<?php
+class Logger implements Loggable {
+    function log($message) {
+        echo $message;
+    }
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP56ForTypeHintArray()
+    {
+        $code = '<?php
+class Processor {
+    function process(array $items) {
+        return $items;
+    }
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP44ForUnderscoreClassName()
+    {
+        $code = '<?php
+class My_Class {
+    var $data;
+
+    function My_Class() {}
+}';
+        $this->assertEquals('4.4', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP56ForDefaultFallback()
+    {
+        $code = '<?php echo "hello";';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
 }

@@ -306,4 +306,31 @@ class SymbolCollectorTest extends TestCase
         $this->assertCount(1, $methods);
         $this->assertTrue($methods[0]->getMetadataValue('isOldStyleConstructor', false));
     }
+
+    public function testOldStyleConstructorCoexistsWithConstruct()
+    {
+        $code = '<?php class MyClass { public function __construct() {} public function MyClass() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(2, $methods);
+
+        $methodsByName = array();
+        foreach ($methods as $method) {
+            $methodsByName[$method->getName()] = $method;
+        }
+
+        $this->assertTrue($methodsByName['__construct']->getMetadataValue('isMagic', false));
+        $this->assertTrue($methodsByName['MyClass']->getMetadataValue('isOldStyleConstructor', false));
+    }
+
+    public function testOldStyleConstructorDefaultVisibilityIsPublic()
+    {
+        $code = '<?php class MyClass { function MyClass() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(1, $methods);
+        $this->assertEquals(Symbol::VISIBILITY_PUBLIC, $methods[0]->getVisibility());
+    }
 }
