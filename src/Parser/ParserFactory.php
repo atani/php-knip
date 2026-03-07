@@ -329,7 +329,7 @@ class ParserFactory
         }
 
         // Type hints (PHP 5 style)
-        if (preg_match('/function\s+\w+\s*\([^)]*\b(array|callable)\s+\$/s', $code)) {
+        if (preg_match('/function\s+\w+\s*\([^)]*?\b(array|callable)\s+\$/s', $code)) {
             return true;
         }
 
