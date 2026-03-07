@@ -260,6 +260,10 @@ class MethodAnalyzerTest extends TestCase
 
     public function testOldStyleConstructorIsNotFlagged()
     {
+        // Uses VISIBILITY_PRIVATE because MethodAnalyzer only checks private methods.
+        // Public old-style constructors (the typical PHP 4 case) are skipped earlier
+        // by the visibility check, so this test covers the defensive path for
+        // private methods with isOldStyleConstructor metadata.
         $symbolTable = new SymbolTable();
         $method = Symbol::createMethod('MyService', 'App\\MyService', Symbol::VISIBILITY_PRIVATE);
         $method->setFilePath('/src/MyService.php');

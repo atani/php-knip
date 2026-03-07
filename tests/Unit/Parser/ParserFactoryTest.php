@@ -347,6 +347,49 @@ class Foo {
         $this->assertEquals('5.6', $this->factory->detectVersion($code));
     }
 
+    public function testDetectVersionClassWithVisibilityInStringLiteral()
+    {
+        // Known limitation: visibility keywords in string literals may affect detection.
+        // Here "public function" in a string matches the hasPHP5Features regex,
+        // causing a PHP 4-only file to be detected as PHP 5.
+        $code = '<?php
+class Foo {
+    var $x;
+    function test() { return "public function fake"; }
+}';
+        // 'public function' in string literal triggers hasPHP5Features
+        // hasPHP5Features is checked first, so returns 5.6
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
+    public function testCreateWithPHP44ParsesPhp4Code()
+    {
+        // Verify PHP 4 version creates a working parser (internally maps to PHP 5 parser)
+        $parser = $this->factory->create('4.4');
+        $code = '<?php
+class MyClass {
+    var $name;
+    function MyClass($name) { $this->name = $name; }
+    function getName() { return $this->name; }
+}';
+        $ast = $parser->parse($code);
+        $this->assertNotNull($ast);
+        $this->assertNotEmpty($ast);
+    }
+
+    public function testDetectVersionReturnsPHP56ForVarWithTryCatch()
+    {
+        // PHP 5 features (try-catch) should take priority over PHP 4 patterns (var)
+        $code = '<?php
+class MyClass {
+    var $data;
+    function load() {
+        try { $this->data = file_get_contents("x"); } catch (Exception $e) {}
+    }
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
     public function testDetectVersionMultipleClassesNoFalseOldStyleConstructor()
     {
         // function Foo() exists in class Bar - the two-step regex should still match

@@ -286,6 +286,7 @@ class SymbolCollector extends NodeVisitorAbstract
 
         $this->symbolTable->add($symbol);
         $this->currentClass = $symbol->getFullyQualifiedName();
+        $this->currentIsClass = false;
     }
 
     /**

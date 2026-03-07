@@ -394,6 +394,27 @@ class SymbolCollectorTest extends TestCase
         $this->assertFalse($methods[0]->getMetadataValue('isOldStyleConstructor', false));
     }
 
+    public function testClassFollowedByEnumSameNameNotMarkedAsConstructor()
+    {
+        // Verify that after processing a class, an enum's same-named method
+        // is not incorrectly marked as old-style constructor
+        $code = '<?php
+class Foo { function Foo() {} }
+enum Status { case Active; public function Status() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $methodsByName = array();
+        foreach ($methods as $method) {
+            $methodsByName[$method->getParent() . '::' . $method->getName()] = $method;
+        }
+
+        // Foo::Foo() in class should be marked
+        $this->assertTrue($methodsByName['Foo::Foo']->getMetadataValue('isOldStyleConstructor', false));
+        // Status::Status() in enum should NOT be marked
+        $this->assertFalse($methodsByName['Status::Status']->getMetadataValue('isOldStyleConstructor', false));
+    }
+
     public function testMultipleClassesCrossNameNotMarkedAsConstructor()
     {
         $code = '<?php class Foo { function Bar() {} } class Bar { function other() {} }';

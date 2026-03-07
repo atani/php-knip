@@ -295,6 +295,10 @@ class ParserFactory
     /**
      * Check for PHP 5 specific features (not present in PHP 4)
      *
+     * Known limitation: regex patterns match against raw source code including
+     * comments and string literals, which may cause false positives.
+     * This is acceptable for file-level version detection heuristics.
+     *
      * @param string $code PHP source code
      *
      * @return bool True if PHP 5 features detected
@@ -374,6 +378,8 @@ class ParserFactory
         }
 
         // Classes without visibility modifiers
+        // Known limitation: checks visibility keywords anywhere in the file, not scoped to class body.
+        // Visibility keywords inside strings or comments may cause false negatives.
         if (preg_match('/\bclass\s+\w+/', $code) && !preg_match('/\b(public|protected|private)\b/', $code)) {
             return true;
         }

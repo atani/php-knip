@@ -53,7 +53,6 @@ class AnalyzeCommandTest extends TestCase
 
     public function testValidPhpVersionIsAccepted()
     {
-        // Should not throw - use a minimal path to avoid long execution
         $tmpDir = sys_get_temp_dir() . '/php_knip_test_empty_' . uniqid();
         mkdir($tmpDir);
 
@@ -62,8 +61,7 @@ class AnalyzeCommandTest extends TestCase
                 'path' => $tmpDir,
                 '--php-version' => '4.4',
             ));
-            // No exception means validation passed
-            $this->assertTrue(true);
+            $this->assertEquals(0, $this->commandTester->getStatusCode());
         } finally {
             rmdir($tmpDir);
         }
@@ -79,9 +77,32 @@ class AnalyzeCommandTest extends TestCase
                 'path' => $tmpDir,
                 '--php-version' => 'auto',
             ));
-            $this->assertTrue(true);
+            $this->assertEquals(0, $this->commandTester->getStatusCode());
         } finally {
             rmdir($tmpDir);
         }
+    }
+
+    /**
+     * @dataProvider unsupportedVersionProvider
+     */
+    public function testUnsupportedBoundaryVersionsThrowException($version)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->commandTester->execute(array(
+            'path' => '.',
+            '--php-version' => $version,
+        ));
+    }
+
+    public static function unsupportedVersionProvider()
+    {
+        return array(
+            'below minimum' => array('4.3'),
+            'gap version' => array('5.5'),
+            'non-existent major' => array('6.0'),
+            'above maximum' => array('8.4'),
+        );
     }
 }
