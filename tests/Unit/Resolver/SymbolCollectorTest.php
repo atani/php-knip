@@ -384,6 +384,16 @@ class SymbolCollectorTest extends TestCase
         $this->assertFalse($methods[0]->getMetadataValue('isOldStyleConstructor', false));
     }
 
+    public function testEnumSameNameMethodNotMarkedAsConstructor()
+    {
+        $code = '<?php enum Status { case Active; public function Status() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(1, $methods);
+        $this->assertFalse($methods[0]->getMetadataValue('isOldStyleConstructor', false));
+    }
+
     public function testMultipleClassesCrossNameNotMarkedAsConstructor()
     {
         $code = '<?php class Foo { function Bar() {} } class Bar { function other() {} }';

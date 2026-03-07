@@ -337,6 +337,16 @@ class Bar {
         $this->assertEquals('4.4', $this->factory->detectVersion($code));
     }
 
+    public function testDetectVersionReturnsPHP56ForProtectedProperty()
+    {
+        $code = '<?php
+class Foo {
+    protected $x;
+    function test() {}
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
     public function testDetectVersionMultipleClassesNoFalseOldStyleConstructor()
     {
         // function Foo() exists in class Bar - the two-step regex should still match

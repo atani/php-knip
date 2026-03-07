@@ -361,6 +361,9 @@ class ParserFactory
         // Old-style constructor (method name matches class name, case-insensitive)
         // Two-step approach to avoid O(n^2) regex performance on large files:
         // 1. Extract class names, 2. Search for matching function declarations
+        // Known limitation: matches function names against class names globally (not per-class scope),
+        // so `function Foo()` in `class Bar` may match `class Foo` in the same file.
+        // This is acceptable for file-level version detection heuristics.
         // Note: implements is not checked here because hasPHP5Features catches it first
         if (preg_match_all('/\bclass\s+(\w+)\b/', $code, $matches)) {
             foreach ($matches[1] as $className) {
@@ -371,7 +374,7 @@ class ParserFactory
         }
 
         // Classes without visibility modifiers
-        if (preg_match('/class\s+\w+/', $code) && !preg_match('/\b(public|protected|private)\b/', $code)) {
+        if (preg_match('/\bclass\s+\w+/', $code) && !preg_match('/\b(public|protected|private)\b/', $code)) {
             return true;
         }
 
