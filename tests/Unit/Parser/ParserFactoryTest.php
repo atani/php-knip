@@ -216,6 +216,69 @@ class Controller {}';
         $this->assertEquals('8.0', $this->factory->detectVersion($code));
     }
 
+    public function testDetectVersionReturnsPHP70ForNullCoalescing()
+    {
+        $code = '<?php
+class Config {
+    public function get($key) { return $this->data[$key] ?? null; }
+}';
+        $this->assertEquals('7.0', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP70ForSpaceshipOperator()
+    {
+        $code = '<?php
+class Sorter {
+    public function compare($a, $b) { return $a <=> $b; }
+}';
+        $this->assertEquals('7.0', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP70ForAnonymousClass()
+    {
+        $code = '<?php
+class Factory {
+    public function create() { return new class {}; }
+}';
+        $this->assertEquals('7.0', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP70ForScalarTypeDeclaration()
+    {
+        $code = '<?php
+class Validator {
+    public function check(string $value): bool { return !empty($value); }
+}';
+        $this->assertEquals('7.0', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP80ForMatchExpression()
+    {
+        $code = '<?php
+class Handler {
+    public function handle($status) { return match($status) { 200 => "ok", 404 => "not found" }; }
+}';
+        $this->assertEquals('8.0', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP80ForConstructorPromotion()
+    {
+        $code = '<?php
+class User {
+    public function __construct(private string $name) {}
+}';
+        $this->assertEquals('8.0', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP80ForUnionTypes()
+    {
+        $code = '<?php
+class Result {
+    public function getValue(): string|null { return null; }
+}';
+        $this->assertEquals('8.0', $this->factory->detectVersion($code));
+    }
+
     public function testDetectVersionReturnsPHP56ForVarWithVisibility()
     {
         $code = '<?php
