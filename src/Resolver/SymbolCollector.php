@@ -479,7 +479,7 @@ class SymbolCollector extends NodeVisitorAbstract
      */
     private function classHasConstructMethod(Stmt\Class_ $node)
     {
-        foreach ($node->stmts as $stmt) {
+        foreach ($node->stmts ?? array() as $stmt) {
             if ($stmt instanceof Stmt\ClassMethod && $this->getNameString($stmt->name) === '__construct') {
                 return true;
             }

@@ -16,6 +16,7 @@ use Symfony\Component\Finder\Finder;
 use PhpParser\NodeTraverser;
 use PhpKnip\Config\ConfigLoader;
 use PhpKnip\Parser\AstBuilder;
+use PhpKnip\Parser\ParserFactory;
 use PhpKnip\Resolver\SymbolCollector;
 use PhpKnip\Resolver\SymbolTable;
 use PhpKnip\Resolver\ReferenceCollector;
@@ -609,7 +610,7 @@ class AnalyzeCommand extends Command
 
         if ($input->getOption('php-version') !== 'auto') {
             $phpVersion = $input->getOption('php-version');
-            $supported = \PhpKnip\Parser\ParserFactory::getSupportedVersions();
+            $supported = ParserFactory::getSupportedVersions();
             if (!in_array($phpVersion, $supported, true)) {
                 throw new \InvalidArgumentException(
                     sprintf('Unsupported PHP version "%s". Supported: %s', $phpVersion, implode(', ', $supported))

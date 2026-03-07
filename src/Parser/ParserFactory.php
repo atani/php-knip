@@ -305,7 +305,7 @@ class ParserFactory
      */
     private function hasPHP5Features($code)
     {
-        // Namespaces
+        // Namespaces (named only; bracketed global `namespace { }` is not PHP 5-specific)
         if (preg_match('/\bnamespace\s+[\w\\\\]+/', $code)) {
             return true;
         }
@@ -396,6 +396,8 @@ class ParserFactory
 
     /**
      * Get supported PHP versions
+     *
+     * When adding a new version, also update detectVersion() and create() if needed.
      *
      * @return array List of supported PHP versions
      */
