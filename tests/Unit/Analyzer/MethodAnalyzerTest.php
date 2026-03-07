@@ -278,6 +278,23 @@ class MethodAnalyzerTest extends TestCase
         $this->assertCount(0, $issues);
     }
 
+    public function testExplicitFalseOldStyleConstructorStillFlagged()
+    {
+        // When isOldStyleConstructor is explicitly false, method should still be flagged as unused
+        $symbolTable = new SymbolTable();
+        $method = Symbol::createMethod('MyService', 'App\\MyService', Symbol::VISIBILITY_PRIVATE);
+        $method->setFilePath('/src/MyService.php');
+        $method->setStartLine(10);
+        $method->setMetadata('isOldStyleConstructor', false);
+        $symbolTable->add($method);
+
+        $context = new AnalysisContext($symbolTable, array());
+
+        $issues = $this->analyzer->analyze($context);
+
+        $this->assertCount(1, $issues);
+    }
+
     public function testNonConstructorPrivateMethodStillFlagged()
     {
         $symbolTable = new SymbolTable();

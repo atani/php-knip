@@ -33,9 +33,26 @@ class AnalyzeCommandTest extends TestCase
     protected function tearDown(): void
     {
         if ($this->tmpDir !== null && is_dir($this->tmpDir)) {
-            rmdir($this->tmpDir);
+            $this->removeDirectory($this->tmpDir);
             $this->tmpDir = null;
         }
+    }
+
+    private function removeDirectory($dir)
+    {
+        $items = scandir($dir);
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            $path = $dir . '/' . $item;
+            if (is_dir($path)) {
+                $this->removeDirectory($path);
+            } else {
+                unlink($path);
+            }
+        }
+        rmdir($dir);
     }
 
     private function createTmpDir()

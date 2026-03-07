@@ -609,7 +609,7 @@ class AnalyzeCommand extends Command
 
         if ($input->getOption('php-version') !== 'auto') {
             $phpVersion = $input->getOption('php-version');
-            $supported = (new \PhpKnip\Parser\ParserFactory())->getSupportedVersions();
+            $supported = \PhpKnip\Parser\ParserFactory::getSupportedVersions();
             if (!in_array($phpVersion, $supported, true)) {
                 throw new \InvalidArgumentException(
                     sprintf('Unsupported PHP version "%s". Supported: %s', $phpVersion, implode(', ', $supported))

@@ -343,6 +343,30 @@ class Symbol
     }
 
     /**
+     * Get short name (without namespace) from fully qualified name
+     *
+     * @return string
+     */
+    public function getShortName()
+    {
+        $fqn = $this->fullyQualifiedName !== null ? $this->fullyQualifiedName : $this->name;
+        return self::extractShortName($fqn);
+    }
+
+    /**
+     * Extract short name from a fully qualified name string
+     *
+     * @param string $fqn Fully qualified name
+     *
+     * @return string Short name without namespace
+     */
+    public static function extractShortName($fqn)
+    {
+        $parts = explode('\\', $fqn);
+        return end($parts);
+    }
+
+    /**
      * @return string|null
      */
     public function getNamespace()

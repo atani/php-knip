@@ -333,7 +333,7 @@ class SymbolCollector extends NodeVisitorAbstract
         //   Note: bracketed global namespace `namespace { }` sets currentNamespace to null (correct)
         // Skip if: __construct exists (it takes precedence, same-named method is just a regular method)
         if ($this->currentIsClass && $this->currentNamespace === null && !$this->currentClassHasConstruct) {
-            $shortClassName = $this->getShortClassName($this->currentClass);
+            $shortClassName = Symbol::extractShortName($this->currentClass);
             if (strcasecmp($methodName, $shortClassName) === 0) {
                 $symbol->setMetadata('isOldStyleConstructor', true);
             }
@@ -516,19 +516,6 @@ class SymbolCollector extends NodeVisitorAbstract
             return Symbol::VISIBILITY_PROTECTED;
         }
         return Symbol::VISIBILITY_PUBLIC;
-    }
-
-    /**
-     * Get short class name from fully qualified name
-     *
-     * @param string $fqn Fully qualified class name
-     *
-     * @return string Short class name
-     */
-    private function getShortClassName($fqn)
-    {
-        $parts = explode('\\', $fqn);
-        return end($parts);
     }
 
     /**

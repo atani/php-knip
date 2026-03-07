@@ -316,6 +316,7 @@ class ParserFactory
         }
 
         // Visibility modifiers on methods/properties (public/protected/private)
+        // Note: visibility on constants (public const) is PHP 7.1+, handled by hasPHP7Features
         if (preg_match('/\b(public|protected|private)\s+(static\s+)?(\$|function\s)/', $code)) {
             return true;
         }
@@ -326,6 +327,7 @@ class ParserFactory
         }
 
         // Type hints (PHP 5 style)
+        // Note: [^)]* does not span newlines, but single-line signatures are the common case
         if (preg_match('/function\s+\w+\s*\([^)]*\b(array|callable)\s+\$/', $code)) {
             return true;
         }
@@ -358,6 +360,8 @@ class ParserFactory
     private function hasPHP4Patterns($code)
     {
         // var keyword for property declarations
+        // Note: var is valid in PHP 5+ but typically indicates PHP 4 style code.
+        // PHP 5+ code using var alongside other PHP 5 features is caught by hasPHP5Features first.
         if (preg_match('/\bvar\s+\$\w+/', $code)) {
             return true;
         }
@@ -394,7 +398,7 @@ class ParserFactory
      *
      * @return array List of supported PHP versions
      */
-    public function getSupportedVersions()
+    public static function getSupportedVersions()
     {
         return array(
             '4.4',

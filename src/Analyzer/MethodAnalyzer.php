@@ -150,7 +150,7 @@ class MethodAnalyzer implements AnalyzerInterface
                     $set[$parent . '::' . $methodName] = true;
 
                     // Also store short class name
-                    $shortParent = $this->getShortName($parent);
+                    $shortParent = Symbol::extractShortName($parent);
                     $set[$shortParent . '::' . $methodName] = true;
                 }
             }
@@ -182,7 +182,7 @@ class MethodAnalyzer implements AnalyzerInterface
         }
 
         // Check short class name
-        $shortClassName = $this->getShortName($className);
+        $shortClassName = Symbol::extractShortName($className);
         $shortFullName = $shortClassName . '::' . $methodName;
         if (isset($calledMethods[$shortFullName])) {
             return true;
@@ -244,16 +244,4 @@ class MethodAnalyzer implements AnalyzerInterface
         return preg_match($regex, $name) === 1;
     }
 
-    /**
-     * Get short name from fully qualified name
-     *
-     * @param string $fqn Fully qualified name
-     *
-     * @return string
-     */
-    private function getShortName($fqn)
-    {
-        $parts = explode('\\', $fqn);
-        return end($parts);
-    }
 }
