@@ -308,8 +308,9 @@ class SymbolCollectorTest extends TestCase
         $this->assertFalse($methods[0]->getMetadataValue('isOldStyleConstructor', false));
     }
 
-    public function testOldStyleConstructorCoexistsWithConstruct()
+    public function testSameNamedMethodNotMarkedWhenConstructExists()
     {
+        // When __construct exists, same-named method is a regular method, not a constructor
         $code = '<?php class MyClass { public function __construct() {} public function MyClass() {} }';
         $table = $this->collectSymbols($code);
 
@@ -322,7 +323,7 @@ class SymbolCollectorTest extends TestCase
         }
 
         $this->assertTrue($methodsByName['__construct']->getMetadataValue('isMagic', false));
-        $this->assertTrue($methodsByName['MyClass']->getMetadataValue('isOldStyleConstructor', false));
+        $this->assertFalse($methodsByName['MyClass']->getMetadataValue('isOldStyleConstructor', false));
     }
 
     public function testOldStyleConstructorDefaultVisibilityIsPublic()
@@ -333,5 +334,23 @@ class SymbolCollectorTest extends TestCase
         $methods = $table->getByType(Symbol::TYPE_METHOD);
         $this->assertCount(1, $methods);
         $this->assertEquals(Symbol::VISIBILITY_PUBLIC, $methods[0]->getVisibility());
+    }
+
+    public function testOldStyleConstructorWithMultipleMethods()
+    {
+        $code = '<?php class Foo { function helper() {} function Foo() {} function another() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(3, $methods);
+
+        $methodsByName = array();
+        foreach ($methods as $method) {
+            $methodsByName[$method->getName()] = $method;
+        }
+
+        $this->assertTrue($methodsByName['Foo']->getMetadataValue('isOldStyleConstructor', false));
+        $this->assertFalse($methodsByName['helper']->getMetadataValue('isOldStyleConstructor', false));
+        $this->assertFalse($methodsByName['another']->getMetadataValue('isOldStyleConstructor', false));
     }
 }

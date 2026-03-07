@@ -38,6 +38,11 @@ class SymbolCollector extends NodeVisitorAbstract
     private $currentClass;
 
     /**
+     * @var bool Whether current class has __construct method
+     */
+    private $currentClassHasConstruct = false;
+
+    /**
      * Constructor
      *
      * @param SymbolTable|null $symbolTable Symbol table to populate
@@ -77,6 +82,7 @@ class SymbolCollector extends NodeVisitorAbstract
     {
         $this->currentNamespace = null;
         $this->currentClass = null;
+        $this->currentClassHasConstruct = false;
     }
 
     /**
@@ -164,6 +170,7 @@ class SymbolCollector extends NodeVisitorAbstract
             $node instanceof Stmt\Trait_ ||
             $node instanceof Stmt\Enum_) {
             $this->currentClass = null;
+            $this->currentClassHasConstruct = false;
         }
 
         // Exit namespace scope (only for bracketed namespaces)
@@ -211,6 +218,7 @@ class SymbolCollector extends NodeVisitorAbstract
 
         $this->symbolTable->add($symbol);
         $this->currentClass = $symbol->getFullyQualifiedName();
+        $this->currentClassHasConstruct = $this->classHasConstructMethod($node);
     }
 
     /**
@@ -309,8 +317,9 @@ class SymbolCollector extends NodeVisitorAbstract
         }
 
         // Mark old-style constructors (PHP 4: method name matches class name)
-        // In PHP 7+, namespaced classes do not treat same-named methods as constructors
-        if ($this->currentNamespace === null) {
+        // Skip if: namespaced (PHP 7+ ignores old-style constructors in namespaces)
+        // Skip if: __construct exists (it takes precedence, same-named method is just a regular method)
+        if ($this->currentNamespace === null && !$this->currentClassHasConstruct) {
             $shortClassName = $this->getShortClassName($this->currentClass);
             if (strcasecmp($methodName, $shortClassName) === 0) {
                 $symbol->setMetadata('isOldStyleConstructor', true);
@@ -446,6 +455,23 @@ class SymbolCollector extends NodeVisitorAbstract
         }
 
         return $uses;
+    }
+
+    /**
+     * Check if class has __construct method
+     *
+     * @param Stmt\Class_ $node Class node
+     *
+     * @return bool
+     */
+    private function classHasConstructMethod(Stmt\Class_ $node)
+    {
+        foreach ($node->stmts as $stmt) {
+            if ($stmt instanceof Stmt\ClassMethod && $this->getNameString($stmt->name) === '__construct') {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -359,7 +359,8 @@ class ParserFactory
         }
 
         // Old-style constructor (method name matches class name, case-insensitive)
-        if (preg_match('/class\s+(\w+)\s*(?:extends\s+\w+\s*)?\{[\s\S]*?function\s+\1\s*\(/si', $code)) {
+        // Use negative lookahead to prevent matching across class boundaries
+        if (preg_match('/class\s+(\w+)\s*(?:extends\s+\w+\s*)?\{(?:(?!\bclass\b)[\s\S])*?function\s+\1\s*\(/si', $code)) {
             return true;
         }
 
