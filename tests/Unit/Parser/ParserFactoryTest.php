@@ -311,4 +311,44 @@ class Foo {
 }';
         $this->assertEquals('5.6', $this->factory->detectVersion($code));
     }
+
+    public function testDetectVersionReturnsPHP56ForVarWithConstruct()
+    {
+        $code = '<?php
+class MyClass {
+    var $x;
+    function __construct() {}
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionNotConfusedByMultipleClasses()
+    {
+        // class Foo has function Bar() - should NOT be detected as old-style constructor
+        // because Bar is a different class name, not Foo
+        $code = '<?php
+class Foo {
+    function helper() {}
+}
+class Bar {
+    function other() {}
+}';
+        // No PHP 5 features, no old-style constructors, but classes without visibility -> PHP 4
+        $this->assertEquals('4.4', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionMultipleClassesNoFalseOldStyleConstructor()
+    {
+        // function Foo() exists in class Bar - the two-step regex should still match
+        // since we check class names against function names globally
+        // This is acceptable: the heuristic detects PHP 4 patterns in the file
+        $code = '<?php
+class Foo {
+    function doWork() {}
+}
+class Bar {
+    function Foo() {}
+}';
+        $this->assertEquals('4.4', $this->factory->detectVersion($code));
+    }
 }

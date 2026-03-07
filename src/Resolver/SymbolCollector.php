@@ -43,6 +43,11 @@ class SymbolCollector extends NodeVisitorAbstract
     private $currentClassHasConstruct = false;
 
     /**
+     * @var bool Whether current type is a class (not interface/trait/enum)
+     */
+    private $currentIsClass = false;
+
+    /**
      * Constructor
      *
      * @param SymbolTable|null $symbolTable Symbol table to populate
@@ -83,6 +88,7 @@ class SymbolCollector extends NodeVisitorAbstract
         $this->currentNamespace = null;
         $this->currentClass = null;
         $this->currentClassHasConstruct = false;
+        $this->currentIsClass = false;
     }
 
     /**
@@ -171,6 +177,7 @@ class SymbolCollector extends NodeVisitorAbstract
             $node instanceof Stmt\Enum_) {
             $this->currentClass = null;
             $this->currentClassHasConstruct = false;
+            $this->currentIsClass = false;
         }
 
         // Exit namespace scope (only for bracketed namespaces)
@@ -219,6 +226,7 @@ class SymbolCollector extends NodeVisitorAbstract
         $this->symbolTable->add($symbol);
         $this->currentClass = $symbol->getFullyQualifiedName();
         $this->currentClassHasConstruct = $this->classHasConstructMethod($node);
+        $this->currentIsClass = true;
     }
 
     /**
@@ -317,9 +325,10 @@ class SymbolCollector extends NodeVisitorAbstract
         }
 
         // Mark old-style constructors (PHP 4: method name matches class name)
+        // Only applies to classes (not interfaces, traits, or enums)
         // Skip if: namespaced (PHP 7+ ignores old-style constructors in namespaces)
         // Skip if: __construct exists (it takes precedence, same-named method is just a regular method)
-        if ($this->currentNamespace === null && !$this->currentClassHasConstruct) {
+        if ($this->currentIsClass && $this->currentNamespace === null && !$this->currentClassHasConstruct) {
             $shortClassName = $this->getShortClassName($this->currentClass);
             if (strcasecmp($methodName, $shortClassName) === 0) {
                 $symbol->setMetadata('isOldStyleConstructor', true);

@@ -353,4 +353,91 @@ class SymbolCollectorTest extends TestCase
         $this->assertFalse($methodsByName['helper']->getMetadataValue('isOldStyleConstructor', false));
         $this->assertFalse($methodsByName['another']->getMetadataValue('isOldStyleConstructor', false));
     }
+
+    public function testOldStyleConstructorWithExtends()
+    {
+        $code = '<?php class Child extends ParentClass { function Child() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(1, $methods);
+        $this->assertTrue($methods[0]->getMetadataValue('isOldStyleConstructor', false));
+    }
+
+    public function testTraitSameNameMethodNotMarkedAsConstructor()
+    {
+        $code = '<?php trait MyTrait { function MyTrait() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(1, $methods);
+        $this->assertFalse($methods[0]->getMetadataValue('isOldStyleConstructor', false));
+    }
+
+    public function testInterfaceSameNameMethodNotMarkedAsConstructor()
+    {
+        $code = '<?php interface MyInterface { function MyInterface(); }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(1, $methods);
+        $this->assertFalse($methods[0]->getMetadataValue('isOldStyleConstructor', false));
+    }
+
+    public function testMultipleClassesCrossNameNotMarkedAsConstructor()
+    {
+        $code = '<?php class Foo { function Bar() {} } class Bar { function other() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(2, $methods);
+
+        $methodsByName = array();
+        foreach ($methods as $method) {
+            $methodsByName[$method->getName()] = $method;
+        }
+
+        // Bar() in class Foo should NOT be marked as old-style constructor
+        $this->assertFalse($methodsByName['Bar']->getMetadataValue('isOldStyleConstructor', false));
+        $this->assertFalse($methodsByName['other']->getMetadataValue('isOldStyleConstructor', false));
+    }
+
+    public function testResetClearsStateBetweenFiles()
+    {
+        // First file: class with __construct
+        $code1 = '<?php class MyClass { public function __construct() {} public function MyClass() {} }';
+        $ast1 = $this->parser->parse($code1);
+
+        $collector = new SymbolCollector();
+        $collector->setCurrentFile('file1.php');
+
+        $traverser = new NodeTraverser();
+        $traverser->addVisitor($collector);
+        $traverser->traverse($ast1);
+
+        // Reset for second file
+        $collector->reset();
+        $collector->setCurrentFile('file2.php');
+
+        // Second file: class without __construct, same-named method should be marked
+        $code2 = '<?php class AnotherClass { function AnotherClass() {} }';
+        $ast2 = $this->parser->parse($code2);
+
+        $traverser2 = new NodeTraverser();
+        $traverser2->addVisitor($collector);
+        $traverser2->traverse($ast2);
+
+        $table = $collector->getSymbolTable();
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+
+        $methodsByName = array();
+        foreach ($methods as $method) {
+            $methodsByName[$method->getParent() . '::' . $method->getName()] = $method;
+        }
+
+        // MyClass() in first file should NOT be marked (because __construct exists)
+        $this->assertFalse($methodsByName['MyClass::MyClass']->getMetadataValue('isOldStyleConstructor', false));
+        // AnotherClass() in second file SHOULD be marked (reset cleared the __construct flag)
+        $this->assertTrue($methodsByName['AnotherClass::AnotherClass']->getMetadataValue('isOldStyleConstructor', false));
+    }
 }
