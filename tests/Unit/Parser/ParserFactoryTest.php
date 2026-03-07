@@ -421,6 +421,31 @@ class Foo {
         $this->assertEquals('5.6', $this->factory->detectVersion($code));
     }
 
+    public function testDetectVersionReturnsPHP56ForStaticPrivateProperty()
+    {
+        // "static private" reversed ordering should also be detected as PHP 5
+        $code = '<?php
+class Cache {
+    static private $instance;
+    function getInstance() { return self::$instance; }
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP56ForMultilineTypeHint()
+    {
+        $code = '<?php
+class Processor {
+    function process(
+        array $items,
+        callable $callback
+    ) {
+        return array_map($callback, $items);
+    }
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
     public function testDetectVersionPHP8TakesPriorityOverPHP4()
     {
         // PHP 8 features should take priority over PHP 4 patterns
