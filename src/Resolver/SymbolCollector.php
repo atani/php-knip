@@ -309,9 +309,12 @@ class SymbolCollector extends NodeVisitorAbstract
         }
 
         // Mark old-style constructors (PHP 4: method name matches class name)
-        $shortClassName = $this->getShortClassName($this->currentClass);
-        if (strcasecmp($methodName, $shortClassName) === 0) {
-            $symbol->setMetadata('isOldStyleConstructor', true);
+        // In PHP 7+, namespaced classes do not treat same-named methods as constructors
+        if ($this->currentNamespace === null) {
+            $shortClassName = $this->getShortClassName($this->currentClass);
+            if (strcasecmp($methodName, $shortClassName) === 0) {
+                $symbol->setMetadata('isOldStyleConstructor', true);
+            }
         }
 
         $this->symbolTable->add($symbol);

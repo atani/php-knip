@@ -297,14 +297,15 @@ class SymbolCollectorTest extends TestCase
         $this->assertFalse($methods[0]->getMetadataValue('isOldStyleConstructor', false));
     }
 
-    public function testOldStyleConstructorWithNamespace()
+    public function testOldStyleConstructorNotMarkedInNamespacedClass()
     {
+        // PHP 7+ does not treat same-named methods as constructors in namespaced classes
         $code = '<?php namespace App\\Models; class User { function User() {} }';
         $table = $this->collectSymbols($code);
 
         $methods = $table->getByType(Symbol::TYPE_METHOD);
         $this->assertCount(1, $methods);
-        $this->assertTrue($methods[0]->getMetadataValue('isOldStyleConstructor', false));
+        $this->assertFalse($methods[0]->getMetadataValue('isOldStyleConstructor', false));
     }
 
     public function testOldStyleConstructorCoexistsWithConstruct()

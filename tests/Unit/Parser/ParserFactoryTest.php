@@ -273,4 +273,42 @@ class My_Class {
         $code = '<?php echo "hello";';
         $this->assertEquals('5.6', $this->factory->detectVersion($code));
     }
+
+    public function testDetectVersionReturnsPHP56ForFinalClass()
+    {
+        $code = '<?php
+final class Singleton {
+    function getInstance() {}
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP56ForCallableTypeHint()
+    {
+        $code = '<?php
+class Runner {
+    function run(callable $fn) { return $fn(); }
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP56ForPrivateProperty()
+    {
+        $code = '<?php
+class Foo {
+    private $x;
+    function test() {}
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
+
+    public function testDetectVersionReturnsPHP56ForVarWithNamespace()
+    {
+        $code = '<?php
+namespace App;
+class Foo {
+    var $x;
+}';
+        $this->assertEquals('5.6', $this->factory->detectVersion($code));
+    }
 }
