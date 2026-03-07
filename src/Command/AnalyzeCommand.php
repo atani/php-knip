@@ -608,7 +608,14 @@ class AnalyzeCommand extends Command
         }
 
         if ($input->getOption('php-version') !== 'auto') {
-            $config['php_version'] = $input->getOption('php-version');
+            $phpVersion = $input->getOption('php-version');
+            $supported = (new \PhpKnip\Parser\ParserFactory())->getSupportedVersions();
+            if (!in_array($phpVersion, $supported, true)) {
+                throw new \InvalidArgumentException(
+                    sprintf('Unsupported PHP version "%s". Supported: %s', $phpVersion, implode(', ', $supported))
+                );
+            }
+            $config['php_version'] = $phpVersion;
         }
 
         // Format: CLI option overrides config, default to 'text'

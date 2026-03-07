@@ -266,4 +266,44 @@ class SymbolCollectorTest extends TestCase
         $classes = $table->getClasses();
         $this->assertEquals(2, $classes[0]->getStartLine());
     }
+
+    public function testOldStyleConstructorIsMarked()
+    {
+        $code = '<?php class MyClass { function MyClass() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(1, $methods);
+        $this->assertTrue($methods[0]->getMetadataValue('isOldStyleConstructor', false));
+    }
+
+    public function testOldStyleConstructorCaseInsensitive()
+    {
+        $code = '<?php class MyClass { function myclass() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(1, $methods);
+        $this->assertTrue($methods[0]->getMetadataValue('isOldStyleConstructor', false));
+    }
+
+    public function testNonConstructorMethodIsNotMarkedAsOldStyleConstructor()
+    {
+        $code = '<?php class MyClass { function otherMethod() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(1, $methods);
+        $this->assertFalse($methods[0]->getMetadataValue('isOldStyleConstructor', false));
+    }
+
+    public function testOldStyleConstructorWithNamespace()
+    {
+        $code = '<?php namespace App\\Models; class User { function User() {} }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(1, $methods);
+        $this->assertTrue($methods[0]->getMetadataValue('isOldStyleConstructor', false));
+    }
 }

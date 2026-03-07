@@ -257,4 +257,45 @@ class MethodAnalyzerTest extends TestCase
 
         $this->assertCount(0, $issues);
     }
+
+    public function testOldStyleConstructorIsNotFlagged()
+    {
+        $symbolTable = new SymbolTable();
+        $method = Symbol::createMethod('MyService', 'App\\MyService', Symbol::VISIBILITY_PRIVATE);
+        $method->setFilePath('/src/MyService.php');
+        $method->setStartLine(10);
+        $method->setMetadata('isOldStyleConstructor', true);
+        $symbolTable->add($method);
+
+        $context = new AnalysisContext($symbolTable, array());
+
+        $issues = $this->analyzer->analyze($context);
+
+        $this->assertCount(0, $issues);
+    }
+
+    public function testNonConstructorPrivateMethodStillFlagged()
+    {
+        $symbolTable = new SymbolTable();
+
+        // Old-style constructor - should be skipped
+        $constructor = Symbol::createMethod('MyService', 'App\\MyService', Symbol::VISIBILITY_PRIVATE);
+        $constructor->setFilePath('/src/MyService.php');
+        $constructor->setStartLine(10);
+        $constructor->setMetadata('isOldStyleConstructor', true);
+        $symbolTable->add($constructor);
+
+        // Regular private method - should be flagged
+        $method = Symbol::createMethod('unusedHelper', 'App\\MyService', Symbol::VISIBILITY_PRIVATE);
+        $method->setFilePath('/src/MyService.php');
+        $method->setStartLine(20);
+        $symbolTable->add($method);
+
+        $context = new AnalysisContext($symbolTable, array());
+
+        $issues = $this->analyzer->analyze($context);
+
+        $this->assertCount(1, $issues);
+        $this->assertEquals('App\\MyService::unusedHelper', $issues[0]->getSymbolName());
+    }
 }
