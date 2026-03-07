@@ -394,6 +394,18 @@ class SymbolCollectorTest extends TestCase
         $this->assertFalse($methods[0]->getMetadataValue('isOldStyleConstructor', false));
     }
 
+    public function testOldStyleConstructorInBracketedGlobalNamespace()
+    {
+        // Bracketed global namespace `namespace { }` sets currentNamespace to null,
+        // so old-style constructors should still be detected
+        $code = '<?php namespace { class Foo { function Foo() {} } }';
+        $table = $this->collectSymbols($code);
+
+        $methods = $table->getByType(Symbol::TYPE_METHOD);
+        $this->assertCount(1, $methods);
+        $this->assertTrue($methods[0]->getMetadataValue('isOldStyleConstructor', false));
+    }
+
     public function testConstructHelperMethodDoesNotSuppressOldStyleConstructor()
     {
         // __construct_helper is NOT __construct, so same-named method should still be marked
