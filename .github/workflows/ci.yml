@@ -21,10 +21,10 @@ jobs:
             php-parser: '^5.0'
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # master
         with:
           php-version: ${{ matrix.php }}
           extensions: mbstring, intl
@@ -35,7 +35,7 @@ jobs:
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ matrix.php }}-${{ matrix.php-parser }}-${{ hashFiles('**/composer.json') }}
@@ -54,7 +54,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: matrix.php == '8.2' && matrix.php-parser == '^5.0'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5.5.4
         with:
           files: coverage.xml
           fail_ci_if_error: false
@@ -63,10 +63,10 @@ jobs:
     name: Security Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # master
         with:
           php-version: '8.2'
 
@@ -77,16 +77,16 @@ jobs:
         run: composer audit --format=plain
 
       - name: Check for known vulnerabilities
-        uses: symfonycorp/security-checker-action@v5
+        uses: symfonycorp/security-checker-action@258311ef7ac571f1310780ef3d79fc5abef642b5 # v5
 
   static-analysis:
     name: Static Analysis
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # master
         with:
           php-version: '8.2'
 
@@ -101,10 +101,10 @@ jobs:
     name: Coding Standards
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # master
         with:
           php-version: '8.2'
 
