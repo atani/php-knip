@@ -41,13 +41,14 @@ jobs:
           timeoutSeconds: 300
           intervalSeconds: 30
 
-      - name: Auto-approve patch/minor updates
+      - name: Note eligible patch/minor updates
         if: |
           steps.wait-for-ci.outputs.conclusion == 'success' &&
           steps.wait-for-security.outputs.conclusion == 'success' &&
           (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
            steps.metadata.outputs.update-type == 'version-update:semver-minor')
-        run: gh pr review --approve "$PR_URL"
+        run: |
+          gh pr comment "$PR_URL" --body "✅ Checks passed for this Dependabot update. GitHub Actions can't approve pull requests directly, so this workflow leaves the final review/merge decision to branch protection settings or a human reviewer."
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -68,8 +69,8 @@ jobs:
           steps.wait-for-security.outputs.conclusion == 'success' &&
           steps.metadata.outputs.ghsa-id != ''
         run: |
-          gh pr review --approve "$PR_URL" --body "Auto-approved: Security update for ${{ steps.metadata.outputs.ghsa-id }}"
-          gh pr merge --auto --squash "$PR_URL"
+          gh pr comment "$PR_URL" --body "✅ Security update detected for ${{ steps.metadata.outputs.ghsa-id }}. Checks passed; enabling auto-merge if branch protection allows it."
+          gh pr merge --auto --squash "$PR_URL" || gh pr comment "$PR_URL" --body "ℹ️ Auto-merge could not be enabled automatically. A reviewer may need to merge this PR manually."
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -82,8 +83,8 @@ jobs:
           (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
            steps.metadata.outputs.update-type == 'version-update:semver-minor')
         run: |
-          gh pr review --approve "$PR_URL"
-          gh pr merge --auto --squash "$PR_URL"
+          gh pr comment "$PR_URL" --body "✅ Dev dependency update passed checks. Enabling auto-merge if branch protection allows it."
+          gh pr merge --auto --squash "$PR_URL" || gh pr comment "$PR_URL" --body "ℹ️ Auto-merge could not be enabled automatically. A reviewer may need to merge this PR manually."
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
