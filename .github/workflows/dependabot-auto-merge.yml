@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@ffa630c65fa7e0ecfa0625b5ceda64399aea1b36 # v3.0.0
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -41,18 +41,6 @@ jobs:
           timeoutSeconds: 300
           intervalSeconds: 30
 
-      - name: Note eligible patch/minor updates
-        if: |
-          steps.wait-for-ci.outputs.conclusion == 'success' &&
-          steps.wait-for-security.outputs.conclusion == 'success' &&
-          (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-           steps.metadata.outputs.update-type == 'version-update:semver-minor')
-        run: |
-          gh pr comment "$PR_URL" --body "✅ Checks passed for this Dependabot update. GitHub Actions can't approve pull requests directly, so this workflow leaves the final review/merge decision to branch protection settings or a human reviewer."
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Auto-merge patch updates
         if: |
           steps.wait-for-ci.outputs.conclusion == 'success' &&
@@ -68,9 +56,7 @@ jobs:
           steps.wait-for-ci.outputs.conclusion == 'success' &&
           steps.wait-for-security.outputs.conclusion == 'success' &&
           steps.metadata.outputs.ghsa-id != ''
-        run: |
-          gh pr comment "$PR_URL" --body "✅ Security update detected for ${{ steps.metadata.outputs.ghsa-id }}. Checks passed; enabling auto-merge if branch protection allows it."
-          gh pr merge --auto --squash "$PR_URL" || gh pr comment "$PR_URL" --body "ℹ️ Auto-merge could not be enabled automatically. A reviewer may need to merge this PR manually."
+        run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -82,9 +68,7 @@ jobs:
           steps.metadata.outputs.dependency-type == 'direct:development' &&
           (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
            steps.metadata.outputs.update-type == 'version-update:semver-minor')
-        run: |
-          gh pr comment "$PR_URL" --body "✅ Dev dependency update passed checks. Enabling auto-merge if branch protection allows it."
-          gh pr merge --auto --squash "$PR_URL" || gh pr comment "$PR_URL" --body "ℹ️ Auto-merge could not be enabled automatically. A reviewer may need to merge this PR manually."
+        run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
